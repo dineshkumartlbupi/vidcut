@@ -39,7 +39,7 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             const Text(
-              'NovaCut',
+              'VidCut',
               style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: 0.5),
             ),
             const SizedBox(width: 8),
@@ -905,7 +905,7 @@ class HomeScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'NovaCut Video Editor',
+                  'VidCut Video Editor',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
                 const SizedBox(height: 6),
@@ -920,7 +920,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 const Text(
-                  'NovaCut uses Android 14 Media Storage permissions solely for loading and exporting user-selected videos.',
+                  'VidCut uses Android 14 Media Storage permissions solely for loading and exporting user-selected videos.',
                   style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
                 ),
               ],

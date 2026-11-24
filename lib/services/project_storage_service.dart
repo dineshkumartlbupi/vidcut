@@ -11,7 +11,7 @@ import '../core/constants.dart';
 import '../core/sample_assets.dart';
 
 class ProjectStorageService {
-  static const String _folderName = 'novacut_projects';
+  static const String _folderName = 'vidcut_projects';
 
   static Future<Directory> _getProjectDir() async {
     final docsDir = await getApplicationDocumentsDirectory();

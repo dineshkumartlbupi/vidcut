@@ -14,7 +14,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.novacut.videoeditor"
+    namespace = "com.vidcut.videoeditor"
     compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
@@ -24,7 +24,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.novacut.videoeditor"
+        applicationId = "com.vidcut.videoeditor"
         minSdk = 24
         targetSdk = 35
         versionCode = 1

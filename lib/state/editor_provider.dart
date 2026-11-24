@@ -479,7 +479,7 @@ class EditorProvider extends ChangeNotifier {
       final cacheDir = await getTemporaryDirectory();
       final id = const Uuid().v4();
       final outputPath = '${cacheDir.path}/extracted_${id}.m4a';
-      const platform = MethodChannel('com.novacut.videoeditor/media_engine');
+      const platform = MethodChannel('com.vidcut.videoeditor/media_engine');
       final resultPath = await platform.invokeMethod<String>('extractAudioFromVideo', {
         'videoPath': videoPath,
         'outputPath': outputPath,

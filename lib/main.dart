@@ -24,18 +24,18 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => EditorProvider()),
       ],
-      child: const NovaCutApp(),
+      child: const VidCutApp(),
     ),
   );
 }
 
-class NovaCutApp extends StatelessWidget {
-  const NovaCutApp({super.key});
+class VidCutApp extends StatelessWidget {
+  const VidCutApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'NovaCut: Video Editor & Maker',
+      title: 'VidCut',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
       home: const HomeScreen(),

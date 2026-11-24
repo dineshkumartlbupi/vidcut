@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
-import 'package:novacut/state/editor_provider.dart';
-import 'package:novacut/models/video_clip.dart';
-import 'package:novacut/screens/editor_screen.dart';
-import 'package:novacut/screens/export_screen.dart';
-import 'package:novacut/core/constants.dart';
+import 'package:vidcut/state/editor_provider.dart';
+import 'package:vidcut/models/video_clip.dart';
+import 'package:vidcut/screens/editor_screen.dart';
+import 'package:vidcut/screens/export_screen.dart';
+import 'package:vidcut/core/constants.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

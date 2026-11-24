@@ -511,7 +511,7 @@ class _ExportScreenState extends State<ExportScreen> {
               setState(() => _isSavedToGallery = true);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Saved video to Gallery (DCIM/NovaCut)'),
+                  content: Text('Saved video to Gallery (DCIM/VidCut)'),
                   backgroundColor: AppTheme.emeraldGreen,
                 ),
               );

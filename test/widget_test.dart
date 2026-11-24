@@ -1,27 +1,27 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
-import 'package:novacut/main.dart';
-import 'package:novacut/state/editor_provider.dart';
-import 'package:novacut/models/video_clip.dart';
-import 'package:novacut/models/text_layer.dart';
-import 'package:novacut/models/audio_track.dart';
-import 'package:novacut/core/constants.dart';
+import 'package:vidcut/main.dart';
+import 'package:vidcut/state/editor_provider.dart';
+import 'package:vidcut/models/video_clip.dart';
+import 'package:vidcut/models/text_layer.dart';
+import 'package:vidcut/models/audio_track.dart';
+import 'package:vidcut/core/constants.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('NovaCut app smoke test & beginner UI presence', (WidgetTester tester) async {
+  testWidgets('VidCut app smoke test & beginner UI presence', (WidgetTester tester) async {
     await tester.pumpWidget(
       MultiProvider(
         providers: [
           ChangeNotifierProvider(create: (_) => EditorProvider()),
         ],
-        child: const NovaCutApp(),
+        child: const VidCutApp(),
       ),
     );
 
     // Verify Brand title & Beginner UI cues
-    expect(find.text('NovaCut'), findsOneWidget);
+    expect(find.text('VidCut'), findsOneWidget);
     expect(find.text('Easy Guide'), findsOneWidget);
     expect(find.text('1-Tap Viral Reel Presets'), findsOneWidget);
   });

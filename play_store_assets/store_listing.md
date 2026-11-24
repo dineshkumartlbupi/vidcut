@@ -1,8 +1,8 @@
-# Google Play Store ASO & SEO Listing Package — NovaCut
+# Google Play Store ASO & SEO Listing Package — VidCut
 
 ## 1. App Identity & Store Metadata
-- **App Name (Title - Max 30 chars)**: `NovaCut: Video Editor & Maker`
-- **Package Name (Application ID)**: `com.novacut.videoeditor`
+- **App Name (Title - Max 30 chars)**: `VidCut: Video Editor & Maker`
+- **Package Name (Application ID)**: `com.vidcut.videoeditor`
 - **Category**: `Video Players & Editors`
 - **Content Rating**: `Everyone (PEGI 3 / ESRB Everyone)`
 - **Target Audience**: Content Creators, Reel Makers, TikTokers, YouTubers, Vloggers, Instagram Influencers
@@ -17,13 +17,13 @@
 ## 3. Full Store Description (Optimized for Organic ASO & SEO Traffic)
 
 ```markdown
-🔥 NovaCut: The Ultimate 100% Free Video Editor & Reels Maker — No Watermark!
+🔥 VidCut: The Ultimate 100% Free Video Editor & Reels Maker — No Watermark!
 
-Looking for a powerful, pro-grade video editor and maker without annoying watermarks, hidden subscriptions, or confusing tools? Meet NovaCut! Designed for creators, vloggers, and social media stars, NovaCut gives you VIP studio editing features 100% FREE.
+Looking for a powerful, pro-grade video editor and maker without annoying watermarks, hidden subscriptions, or confusing tools? Meet VidCut! Designed for creators, vloggers, and social media stars, VidCut gives you VIP studio editing features 100% FREE.
 
-Whether you're creating viral Instagram Reels, TikTok videos, YouTube Shorts, or aesthetic photo slideshows with music, NovaCut delivers cinema-grade results in seconds.
+Whether you're creating viral Instagram Reels, TikTok videos, YouTube Shorts, or aesthetic photo slideshows with music, VidCut delivers cinema-grade results in seconds.
 
-✨ WHY MILLIONS CHOOSE NOVACUT:
+✨ WHY MILLIONS CHOOSE VIDCUT:
 • 🚫 100% FREE & NO WATERMARK: Export clean, brand-free videos forever. No VIP fee required!
 • ⚡ 1-TAP VIRAL REEL PRESETS: Turn raw footage into trending blockbusters with 1 tap.
 • 🎞️ PRO MULTI-TRACK TIMELINE: Precise millisecond trimming, splitting, and multi-layer overlays.
@@ -62,9 +62,9 @@ Whether you're creating viral Instagram Reels, TikTok videos, YouTube Shorts, or
 • Creator Stickers & Badges: Trending emoji overlays and creator badges.
 
 🔒 PRIVACY & NO INTRUSIVE ADS:
-Your videos and media files stay 100% private on your device. NovaCut respects your privacy and provides a smooth, crash-free editing experience.
+Your videos and media files stay 100% private on your device. VidCut respects your privacy and provides a smooth, crash-free editing experience.
 
-Download NovaCut: Video Editor & Maker today and create your next viral masterpiece! ✨
+Download VidCut: Video Editor & Maker today and create your next viral masterpiece! ✨
 ```
 
 ---
@@ -82,7 +82,7 @@ Download NovaCut: Video Editor & Maker today and create your next viral masterpi
 
 ## 5. Play Console Store Listing Visual Strategy (7 Screenshot Slides)
 
-1. **Slide 1 (Hero)**: *"Pro Video Editor & Reels Maker — 100% Free, No Watermark!"* (Showing NovaCut Timeline with multi-track layout).
+1. **Slide 1 (Hero)**: *"Pro Video Editor & Reels Maker — 100% Free, No Watermark!"* (Showing VidCut Timeline with multi-track layout).
 2. **Slide 2 (Transitions)**: *"Cinematic Transitions — Cross Dissolve, Glitch & Zoom"* (Showing Transition Selector Sheet).
 3. **Slide 3 (Velocity)**: *"Smooth Slow-Mo & Velocity Curve Ramping"* (Showing Speed Ramping Curve Montage & Bullet Time).
 4. **Slide 4 (Audio)**: *"Extract Audio from Any Video & 1-Tap Mute"* (Showing Audio Extraction & Music Studio).
@@ -94,7 +94,7 @@ Download NovaCut: Video Editor & Maker today and create your next viral masterpi
 
 ## 6. What's New in Version 1.2.0 (Play Console Release Notes)
 ```
-🎉 What's New in NovaCut v1.2.0:
+🎉 What's New in VidCut v1.2.0:
 • ✨ 100% Free Pro VIP: Full 4K 60FPS export with NO watermarks forever!
 • 🔀 Pro Transitions: Added Cross Dissolve, Fade to Black, White Flash, Slide, and Glitch FX.
 • 🏎️ Velocity Speed Curves: Montage, Hero Climax, and Bullet Time speed ramping.

@@ -1,4 +1,4 @@
-package com.novacut.videoeditor
+package com.vidcut.videoeditor
 
 import android.media.MediaCodec
 import android.media.MediaExtractor
@@ -12,8 +12,8 @@ import java.io.File
 import java.nio.ByteBuffer
 
 class MainActivity : FlutterActivity() {
-    private val CHANNEL = "com.novacut.videoeditor/media_engine"
-    private val TAG = "NovaCutMediaEngine"
+    private val CHANNEL = "com.vidcut.videoeditor/media_engine"
+    private val TAG = "VidCutMediaEngine"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)

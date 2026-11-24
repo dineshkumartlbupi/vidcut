@@ -76,7 +76,7 @@ class VideoExportService {
         final outputDir = await getApplicationDocumentsDirectory();
         final timestamp = DateTime.now().millisecondsSinceEpoch;
         final cleanTitle = project.name.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_').toLowerCase();
-        final outputFile = File('${outputDir.path}/novacut_${cleanTitle}_$timestamp.mp4');
+        final outputFile = File('${outputDir.path}/vidcut_${cleanTitle}_$timestamp.mp4');
 
         // 1. Resolve primary video input path
         String? localVideoPath;
@@ -130,7 +130,7 @@ class VideoExportService {
         bool muxSuccess = false;
         if (localVideoPath != null) {
           try {
-            const platform = MethodChannel('com.novacut.videoeditor/media_engine');
+            const platform = MethodChannel('com.vidcut.videoeditor/media_engine');
             final muxedPath = await platform.invokeMethod<String>('muxVideoAndAudio', {
               'videoPath': localVideoPath,
               'audioPath': localAudioPath,
@@ -209,7 +209,7 @@ class VideoExportService {
       final file = XFile(filePath);
       await Share.shareXFiles(
         [file],
-        text: 'Edited with NovaCut: AI Video Editor & Reel Maker ✨ #NovaCut #VideoEditor',
+        text: 'Edited with VidCut: Video Editor & Maker ✨ #VidCut #VideoEditor',
         subject: title,
       );
     } catch (e) {
