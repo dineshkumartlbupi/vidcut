@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../state/editor_provider.dart';
+import '../models/video_clip.dart';
 import '../models/sticker_layer.dart';
 import '../core/theme.dart';
 import '../core/sample_assets.dart';
@@ -162,13 +164,14 @@ class EditorScreen extends StatelessWidget {
       case 'canvas':
         return CanvasRatioSheet(provider: provider);
       case 'stickers':
-        return _buildStickersDrawer(provider);
+        return _buildStickersDrawer(context, provider);
       default:
         return const SizedBox.shrink();
     }
   }
 
   Widget _buildEditingToolbar(BuildContext context, EditorProvider provider) {
+    final isMuted = provider.selectedClip?.isMuted ?? false;
     final tools = [
       {'id': 'split', 'name': 'Split', 'icon': Icons.call_split_rounded},
       {'id': 'canvas', 'name': 'Canvas', 'icon': Icons.aspect_ratio_rounded},
@@ -176,7 +179,9 @@ class EditorScreen extends StatelessWidget {
       {'id': 'filters', 'name': 'Filters', 'icon': Icons.auto_fix_high_rounded},
       {'id': 'music', 'name': 'Audio', 'icon': Icons.audiotrack_rounded},
       {'id': 'text', 'name': 'Text', 'icon': Icons.title_rounded},
-      {'id': 'stickers', 'name': 'Stickers', 'icon': Icons.sentiment_satisfied_alt_rounded},
+      {'id': 'stickers', 'name': 'Stickers', 'icon': Icons.layers_rounded},
+      {'id': 'mute', 'name': isMuted ? 'Unmute' : 'Mute', 'icon': isMuted ? Icons.volume_off_rounded : Icons.volume_up_rounded},
+      {'id': 'add_photo', 'name': '+ Photo', 'icon': Icons.add_photo_alternate_rounded},
       {'id': 'rotate', 'name': 'Rotate', 'icon': Icons.rotate_right_rounded},
       {'id': 'flip', 'name': 'Flip', 'icon': Icons.flip_rounded},
     ];
@@ -198,7 +203,27 @@ class EditorScreen extends StatelessWidget {
 
           return GestureDetector(
             onTap: () {
-              if (toolId == 'split') {
+              if (toolId == 'mute') {
+                provider.toggleMuteClip();
+                final muted = provider.selectedClip?.isMuted ?? false;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        Icon(muted ? Icons.volume_off_rounded : Icons.volume_up_rounded, color: Colors.white, size: 16),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(muted ? 'Original video audio muted (0% volume)' : 'Original video audio unmuted'),
+                        ),
+                      ],
+                    ),
+                    duration: const Duration(milliseconds: 1200),
+                    backgroundColor: muted ? AppTheme.pinkNeon : AppTheme.primary,
+                  ),
+                );
+              } else if (toolId == 'add_photo') {
+                _pickAndAddPhoto(context, provider);
+              } else if (toolId == 'split') {
                 provider.splitClipAtPlayhead();
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -221,7 +246,7 @@ class EditorScreen extends StatelessWidget {
               }
             },
             child: Container(
-              width: 60,
+              width: 62,
               margin: const EdgeInsets.symmetric(horizontal: 4),
               decoration: BoxDecoration(
                 color: isSelected ? AppTheme.primary.withOpacity(0.25) : Colors.transparent,
@@ -234,7 +259,9 @@ class EditorScreen extends StatelessWidget {
                   Icon(
                     tool['icon'] as IconData,
                     size: 20,
-                    color: isSelected ? AppTheme.primaryLight : Colors.white,
+                    color: (toolId == 'mute' && isMuted)
+                        ? AppTheme.pinkNeon
+                        : (isSelected ? AppTheme.primaryLight : Colors.white),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -242,7 +269,9 @@ class EditorScreen extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                      color: isSelected ? Colors.white : AppTheme.textSecondary,
+                      color: (toolId == 'mute' && isMuted)
+                          ? AppTheme.pinkNeon
+                          : (isSelected ? Colors.white : AppTheme.textSecondary),
                     ),
                   ),
                 ],
@@ -254,7 +283,7 @@ class EditorScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStickersDrawer(EditorProvider provider) {
+  Widget _buildStickersDrawer(BuildContext context, EditorProvider provider) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14),
       color: AppTheme.surfaceElevated,
@@ -269,10 +298,10 @@ class EditorScreen extends StatelessWidget {
               children: [
                 const Row(
                   children: [
-                    Icon(Icons.stars_rounded, size: 20, color: AppTheme.pinkNeon),
+                    Icon(Icons.layers_rounded, size: 20, color: AppTheme.cyan),
                     SizedBox(width: 8),
                     Text(
-                      'Stickers & Creator Badges',
+                      'Stickers & Photo Overlays (PIP)',
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                   ],
@@ -287,48 +316,142 @@ class EditorScreen extends StatelessWidget {
           const SizedBox(height: 10),
           SizedBox(
             height: 44,
-            child: ListView.builder(
+            child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: SampleAssets.stickerBadges.length,
-              itemBuilder: (context, index) {
-                final badge = SampleAssets.stickerBadges[index];
-
-                return GestureDetector(
-                  onTap: () {
-                    provider.addStickerLayer(
-                      StickerLayer(
-                        id: const Uuid().v4(),
-                        content: badge,
-                        xPercent: 0.5,
-                        yPercent: 0.25,
-                        startOnTimelineMs: provider.currentTimeMs,
-                      ),
-                    );
-                    provider.setActiveTool('none');
-                  },
+              children: [
+                // Add Photo Overlay Button (PIP)
+                GestureDetector(
+                  onTap: () => _pickAndAddStickerImage(context, provider),
                   child: Container(
-                    margin: const EdgeInsets.only(right: 8),
+                    margin: const EdgeInsets.only(right: 10),
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                     decoration: BoxDecoration(
-                      color: AppTheme.surfaceCard,
+                      gradient: AppTheme.accentGradient,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppTheme.stroke),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.pinkNeon.withOpacity(0.4),
+                          blurRadius: 6,
+                        ),
+                      ],
                     ),
-                    child: Center(
-                      child: Text(
-                        badge,
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
-                      ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.add_photo_alternate_rounded, size: 16, color: Colors.white),
+                        SizedBox(width: 6),
+                        Text(
+                          '+ Photo Overlay',
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
+                        ),
+                      ],
                     ),
                   ),
-                );
-              },
+                ),
+                // Creator Badges & Stickers
+                ...SampleAssets.stickerBadges.map((badge) {
+                  return GestureDetector(
+                    onTap: () {
+                      provider.addStickerLayer(
+                        StickerLayer(
+                          id: const Uuid().v4(),
+                          content: badge,
+                          xPercent: 0.5,
+                          yPercent: 0.25,
+                          startOnTimelineMs: provider.currentTimeMs,
+                        ),
+                      );
+                      provider.setActiveTool('none');
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(right: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceCard,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppTheme.stroke),
+                      ),
+                      child: Center(
+                        child: Text(
+                          badge,
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ],
             ),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _pickAndAddPhoto(BuildContext context, EditorProvider provider) async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final List<XFile> images = await picker.pickMultiImage();
+      if (images.isNotEmpty) {
+        final photoClips = images.map((img) {
+          return VideoClip(
+            id: const Uuid().v4(),
+            path: img.path,
+            isRemote: false,
+            title: img.name.isNotEmpty ? img.name : 'Photo Slide',
+            durationMs: 3500,
+            volume: 0.0,
+            isMuted: true,
+          );
+        }).toList();
+
+        provider.addClips(photoClips);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Added ${photoClips.length} photo slide(s) to timeline'),
+              backgroundColor: AppTheme.primary,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error picking photo: $e');
+    }
+  }
+
+  Future<void> _pickAndAddStickerImage(BuildContext context, EditorProvider provider) async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        provider.addStickerLayer(
+          StickerLayer(
+            id: const Uuid().v4(),
+            content: image.path,
+            xPercent: 0.5,
+            yPercent: 0.4,
+            scale: 1.5,
+            startOnTimelineMs: provider.currentTimeMs,
+            durationMs: 5000,
+          ),
+        );
+        provider.setActiveTool('none');
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Photo overlay added to video! Drag anywhere on screen.'),
+              backgroundColor: AppTheme.primary,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error picking sticker image: $e');
+    }
   }
 
   void _showRenameDialog(BuildContext context, EditorProvider provider) {

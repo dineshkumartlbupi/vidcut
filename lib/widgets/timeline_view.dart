@@ -150,6 +150,71 @@ class _TimelineViewState extends State<TimelineView> {
 
                   const SizedBox(width: 6),
 
+                  // 1-Tap Mute Video Sound Button
+                  GestureDetector(
+                    onTap: () {
+                      final isMuted = widget.provider.selectedClip?.isMuted ?? false;
+                      widget.provider.toggleMuteClip();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Row(
+                            children: [
+                              Icon(isMuted ? Icons.volume_up_rounded : Icons.volume_off_rounded,
+                                  color: AppTheme.cyan, size: 16),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(isMuted ? 'Original video audio restored' : 'Original video audio muted (0% volume)'),
+                              ),
+                            ],
+                          ),
+                          duration: const Duration(milliseconds: 1200),
+                          backgroundColor: AppTheme.surfaceElevated,
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: (widget.provider.selectedClip?.isMuted ?? false)
+                            ? AppTheme.pinkNeon.withOpacity(0.2)
+                            : AppTheme.surfaceCard,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: (widget.provider.selectedClip?.isMuted ?? false)
+                              ? AppTheme.pinkNeon
+                              : AppTheme.stroke,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            (widget.provider.selectedClip?.isMuted ?? false)
+                                ? Icons.volume_off_rounded
+                                : Icons.volume_up_rounded,
+                            size: 13,
+                            color: (widget.provider.selectedClip?.isMuted ?? false)
+                                ? AppTheme.pinkNeon
+                                : Colors.white,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            (widget.provider.selectedClip?.isMuted ?? false) ? 'Muted' : 'Mute',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: (widget.provider.selectedClip?.isMuted ?? false)
+                                  ? AppTheme.pinkNeon
+                                  : Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(width: 6),
+
                   // Delete selected clip
                   if (project.clips.length > 1)
                     IconButton(

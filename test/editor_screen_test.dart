@@ -133,6 +133,45 @@ void main() {
       expect(find.text('Teal & Orange'), findsOneWidget);
       expect(find.text('Cyberpunk Neon'), findsOneWidget);
     });
+
+    testWidgets('Tapping Mute button toggles clip audio mute state', (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(buildTestableWidget(child: const EditorScreen(), provider: provider));
+      await tester.pumpAndSettle();
+
+      expect(provider.selectedClip?.isMuted, false);
+      expect(find.text('Mute'), findsWidgets);
+
+      // Tap Mute in timeline quick tools
+      await tester.tap(find.text('Mute').first);
+      await tester.pumpAndSettle();
+
+      expect(provider.selectedClip?.isMuted, true);
+      expect(find.text('Original video audio muted (0% volume)'), findsOneWidget);
+    });
+
+    test('VideoClip correctly identifies photo files with isImage property', () {
+      final photoClip = VideoClip(
+        id: 'photo_1',
+        path: '/storage/DCIM/Camera/IMG_2026.JPG',
+        isRemote: false,
+        durationMs: 3500,
+        title: 'Sunset Photo',
+      );
+      final videoClip = VideoClip(
+        id: 'video_1',
+        path: '/storage/DCIM/Camera/VID_2026.mp4',
+        isRemote: false,
+        durationMs: 12000,
+        title: 'City Walk',
+      );
+
+      expect(photoClip.isImage, true);
+      expect(videoClip.isImage, false);
+    });
   });
 
   group('ExportScreen UI Tests', () {

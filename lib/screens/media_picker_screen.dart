@@ -259,25 +259,50 @@ class _MediaPickerScreenState extends State<MediaPickerScreen> with SingleTicker
               style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.4),
             ),
             const SizedBox(height: 24),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.file_upload_outlined),
-              label: const Text('Open Gallery Picker'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.file_upload_outlined),
+                label: const Text('Import Video from Gallery'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                ),
+                onPressed: () => _pickGalleryVideo(context),
               ),
-              onPressed: () => _pickGalleryVideo(context),
             ),
             const SizedBox(height: 12),
-            OutlinedButton.icon(
-              icon: const Icon(Icons.videocam_outlined),
-              label: const Text('Record with Camera'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.white,
-                side: const BorderSide(color: AppTheme.stroke),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.photo_library_rounded, color: Colors.white),
+                label: const Text(
+                  '📸 Photos to Video Reel (Slideshow)',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.pinkNeon,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  elevation: 4,
+                  shadowColor: AppTheme.pinkNeon.withOpacity(0.5),
+                ),
+                onPressed: () => _pickGalleryPhotos(context),
               ),
-              onPressed: () => _recordCameraVideo(context),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                icon: const Icon(Icons.videocam_outlined),
+                label: const Text('Record with Camera'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: const BorderSide(color: AppTheme.stroke),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                ),
+                onPressed: () => _recordCameraVideo(context),
+              ),
             ),
           ],
         ),
@@ -356,6 +381,43 @@ class _MediaPickerScreenState extends State<MediaPickerScreen> with SingleTicker
             name: clip.title,
             ratio: _selectedRatio,
             initialClips: [clip],
+          );
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const EditorScreen()),
+            );
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _pickGalleryPhotos(BuildContext context) async {
+    try {
+      final List<XFile> images = await _picker.pickMultiImage();
+      if (images.isNotEmpty && mounted) {
+        final photoClips = images.map((img) {
+          return VideoClip(
+            id: const Uuid().v4(),
+            path: img.path,
+            isRemote: false,
+            title: img.name.isNotEmpty ? img.name : 'Photo Slide',
+            durationMs: 3500, // 3.5 seconds per slide
+            volume: 0.0,
+            isMuted: true,
+          );
+        }).toList();
+
+        final provider = context.read<EditorProvider>();
+        if (widget.isAddingToCurrentProject) {
+          provider.addClips(photoClips);
+          Navigator.pop(context);
+        } else {
+          await provider.createNewProject(
+            name: 'Photo Slideshow Reel',
+            ratio: _selectedRatio,
+            initialClips: photoClips,
           );
           if (mounted) {
             Navigator.pushReplacement(

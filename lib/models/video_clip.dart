@@ -48,6 +48,15 @@ class VideoClip {
     return (raw / speed).round();
   }
 
+  bool get isImage {
+    final lower = path.toLowerCase();
+    return lower.endsWith('.jpg') ||
+        lower.endsWith('.jpeg') ||
+        lower.endsWith('.png') ||
+        lower.endsWith('.webp') ||
+        lower.endsWith('.heic');
+  }
+
   VideoClip copyWith({
     String? id,
     String? path,

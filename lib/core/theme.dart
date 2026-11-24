@@ -18,6 +18,12 @@ class AppTheme {
   static const Color emeraldGreen = Color(0xFF10B981);
   static const Color pinkNeon = Color(0xFFEC4899);
 
+  static const LinearGradient accentGradient = LinearGradient(
+    colors: [primary, pinkNeon],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
   // Text
   static const Color textPrimary = Color(0xFFFFFFFF);
   static const Color textSecondary = Color(0xFF94A3B8);

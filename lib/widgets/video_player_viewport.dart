@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -94,44 +95,98 @@ class VideoPlayerViewport extends StatelessWidget {
                 );
               }),
 
-              // 3. Active Sticker Layers
+              // 3. Active Sticker Layers & Photo Overlays (PIP)
               ...project.stickerLayers.map((sticker) {
                 final isActive = provider.currentTimeMs >= sticker.startOnTimelineMs &&
                     provider.currentTimeMs <= (sticker.startOnTimelineMs + sticker.durationMs);
 
                 if (!isActive) return const SizedBox.shrink();
 
+                final isImagePath = sticker.content.startsWith('/') ||
+                    sticker.content.startsWith('file://') ||
+                    sticker.content.endsWith('.jpg') ||
+                    sticker.content.endsWith('.jpeg') ||
+                    sticker.content.endsWith('.png') ||
+                    sticker.content.endsWith('.webp');
+
                 return Positioned(
-                  left: (sticker.xPercent * 300).clamp(20, 240),
-                  top: (sticker.yPercent * 450).clamp(40, 400),
+                  left: (sticker.xPercent * 300).clamp(10, 240),
+                  top: (sticker.yPercent * 450).clamp(20, 400),
                   child: GestureDetector(
                     onPanUpdate: (details) {
-                      sticker.xPercent = (sticker.xPercent + details.delta.dx / 300).clamp(0.1, 0.9);
-                      sticker.yPercent = (sticker.yPercent + details.delta.dy / 450).clamp(0.1, 0.9);
+                      sticker.xPercent = (sticker.xPercent + details.delta.dx / 300).clamp(0.05, 0.95);
+                      sticker.yPercent = (sticker.yPercent + details.delta.dy / 450).clamp(0.05, 0.95);
                       provider.saveCurrentProject();
                     },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.black87,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: AppTheme.primary, width: 1.5),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppTheme.primary.withOpacity(0.4),
-                            blurRadius: 8,
+                    child: isImagePath
+                        ? Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Container(
+                                width: 85 * sticker.scale,
+                                height: 85 * sticker.scale,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: AppTheme.cyan, width: 2),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppTheme.cyan.withOpacity(0.4),
+                                      blurRadius: 10,
+                                      spreadRadius: 1,
+                                    ),
+                                  ],
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Image.file(
+                                    File(sticker.content),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Container(
+                                      color: Colors.black54,
+                                      child: const Icon(Icons.broken_image_rounded, color: Colors.white54, size: 30),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                top: -6,
+                                right: -6,
+                                child: GestureDetector(
+                                  onTap: () => provider.removeStickerLayer(sticker.id),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(3),
+                                    decoration: const BoxDecoration(
+                                      color: AppTheme.redPlayhead,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.close, size: 12, color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        : Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.black87,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: AppTheme.primary, width: 1.5),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppTheme.primary.withOpacity(0.4),
+                                  blurRadius: 8,
+                                ),
+                              ],
+                            ),
+                            child: Text(
+                              sticker.content,
+                              style: TextStyle(
+                                fontSize: 16 * sticker.scale,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
-                        ],
-                      ),
-                      child: Text(
-                        sticker.content,
-                        style: TextStyle(
-                          fontSize: 16 * sticker.scale,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
                   ),
                 );
               }),
@@ -224,6 +279,43 @@ class VideoPlayerViewport extends StatelessWidget {
   }
 
   Widget _buildVideoContent(dynamic clip) {
+    // 1. Photo / Image Slide Clip
+    if (clip != null && clip.isImage) {
+      Widget imageWidget;
+      if (clip.isRemote) {
+        imageWidget = CachedNetworkImage(
+          imageUrl: clip.path,
+          fit: BoxFit.cover,
+          placeholder: (_, __) => Container(
+            color: AppTheme.surfaceCard,
+            child: const Center(child: CircularProgressIndicator(color: AppTheme.primary, strokeWidth: 2)),
+          ),
+          errorWidget: (_, __, ___) => Container(
+            color: AppTheme.surfaceCard,
+            child: const Center(child: Icon(Icons.image_outlined, color: Colors.white38, size: 48)),
+          ),
+        );
+      } else {
+        imageWidget = Image.file(
+          File(clip.path),
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => Container(
+            color: AppTheme.surfaceCard,
+            child: const Center(child: Icon(Icons.image_outlined, color: Colors.white38, size: 48)),
+          ),
+        );
+      }
+
+      return Transform.rotate(
+        angle: (clip?.rotationDegrees ?? 0) * (3.1415926535 / 180),
+        child: Transform.flip(
+          flipX: clip?.isFlippedHorizontally ?? false,
+          child: SizedBox.expand(child: imageWidget),
+        ),
+      );
+    }
+
+    // 2. Video Player Content
     if (provider.videoController != null && provider.videoController!.value.isInitialized) {
       return Transform.rotate(
         angle: (clip?.rotationDegrees ?? 0) * (3.1415926535 / 180),

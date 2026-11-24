@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -118,12 +119,19 @@ class EditorProvider extends ChangeNotifier {
   void play() {
     if (_currentProject == null || _currentProject!.clips.isEmpty) return;
     _isPlaying = true;
-    _videoController?.play();
 
-    // Start background music if present
+    // Start background music in exact lockstep
     if (_currentProject!.audioTracks.isNotEmpty && !_currentProject!.audioTracks.first.isMuted) {
       final track = _currentProject!.audioTracks.first;
+      _audioPlayer.setVolume(track.volume.clamp(0.0, 1.0));
+      _audioPlayer.seek(Duration(milliseconds: _currentTimeMs));
       _audioPlayer.play(UrlSource(track.audioUrl));
+    }
+
+    final clip = selectedClip;
+    if (clip != null && !clip.isImage && _videoController != null && _videoController!.value.isInitialized) {
+      _videoController!.setVolume(clip.isMuted ? 0.0 : clip.volume.clamp(0.0, 1.0));
+      _videoController!.play();
     }
 
     _startPlaybackTicker();
@@ -146,8 +154,21 @@ class EditorProvider extends ChangeNotifier {
     // Sync active clip index based on playhead position
     _syncClipIndexToTime();
 
-    if (_videoController != null && _videoController!.value.isInitialized) {
-      _videoController!.seekTo(Duration(milliseconds: _currentTimeMs % 15000));
+    // Calculate relative time inside current clip for millisecond-exact video seek
+    int clipStartOnTimeline = 0;
+    for (int i = 0; i < _selectedClipIndex; i++) {
+      clipStartOnTimeline += _currentProject!.clips[i].effectiveDurationMs;
+    }
+    final offsetInsideClip = (_currentTimeMs - clipStartOnTimeline).clamp(0, 3600000);
+    final clip = selectedClip;
+    if (clip != null && !clip.isImage && _videoController != null && _videoController!.value.isInitialized) {
+      final actualVideoMs = clip.trimStartMs + (offsetInsideClip * clip.speed).round();
+      _videoController!.seekTo(Duration(milliseconds: actualVideoMs));
+    }
+
+    // Keep background audio in exact sync with playhead scrub
+    if (_currentProject!.audioTracks.isNotEmpty) {
+      _audioPlayer.seek(Duration(milliseconds: _currentTimeMs));
     }
 
     notifyListeners();
@@ -198,20 +219,36 @@ class EditorProvider extends ChangeNotifier {
     _videoController = null;
 
     final clip = selectedClip;
-    if (clip == null) return;
+    if (clip == null || clip.isImage) return;
 
     try {
       if (clip.isRemote) {
         _videoController = VideoPlayerController.networkUrl(Uri.parse(clip.path));
       } else {
-        _videoController = VideoPlayerController.networkUrl(Uri.parse(clip.path));
+        _videoController = VideoPlayerController.file(File(clip.path));
       }
 
       await _videoController!.initialize();
       _videoController!.setLooping(true);
       _videoController!.setVolume(clip.isMuted ? 0.0 : clip.volume.clamp(0.0, 1.0));
       _videoController!.setPlaybackSpeed(clip.speed.clamp(0.25, 4.0));
+      if (_isPlaying) {
+        _videoController!.play();
+      }
     } catch (_) {}
+  }
+
+  void toggleMuteClip([int? clipIndex]) {
+    final idx = clipIndex ?? _selectedClipIndex;
+    if (_currentProject == null || idx >= _currentProject!.clips.length) return;
+    _recordHistory();
+    final clip = _currentProject!.clips[idx];
+    clip.isMuted = !clip.isMuted;
+    if (idx == _selectedClipIndex) {
+      _videoController?.setVolume(clip.isMuted ? 0.0 : clip.volume.clamp(0.0, 1.0));
+    }
+    saveCurrentProject();
+    notifyListeners();
   }
 
   // History recording for zero-fear editing

@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../models/project.dart';
 import '../core/constants.dart';
+import '../core/sample_assets.dart';
 
 class ExportProgress {
   final double percentage; // 0.0 to 1.0
@@ -76,21 +78,84 @@ class VideoExportService {
         final cleanTitle = project.name.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_').toLowerCase();
         final outputFile = File('${outputDir.path}/novacut_${cleanTitle}_$timestamp.mp4');
 
-        // If local clips exist, copy the first or generate standard video header
-        bool fileWritten = false;
+        // 1. Resolve primary video input path
+        String? localVideoPath;
         for (final clip in project.clips) {
-          if (!clip.isRemote) {
+          if (!clip.isRemote && !clip.isImage) {
             final f = File(clip.path);
             if (await f.exists()) {
-              await f.copy(outputFile.path);
-              fileWritten = true;
+              localVideoPath = f.path;
               break;
             }
           }
         }
 
-        if (!fileWritten) {
-          // Write sample MP4 signature bytes if synthesizing from sample URLs
+        // If clips are remote stock videos, download to temporary cache
+        if (localVideoPath == null) {
+          for (final clip in project.clips) {
+            if (clip.isRemote && !clip.isImage) {
+              localVideoPath = await _cacheRemoteFile(clip.path, 'stock_${clip.id}.mp4');
+              if (localVideoPath != null) break;
+            }
+          }
+        }
+
+        // If all clips are images (photo slideshow reel), use base stock carrier video
+        if (localVideoPath == null && SampleAssets.stockVideos.isNotEmpty) {
+          localVideoPath = await _cacheRemoteFile(
+            SampleAssets.stockVideos.first.videoUrl,
+            'slideshow_base.mp4',
+          );
+        }
+
+        // 2. Resolve background music audio input path
+        String? localAudioPath;
+        if (project.audioTracks.isNotEmpty && !project.audioTracks.first.isMuted) {
+          final track = project.audioTracks.first;
+          if (track.audioUrl.startsWith('http')) {
+            localAudioPath = await _cacheRemoteFile(track.audioUrl, 'audio_${track.id}.mp3');
+          } else {
+            final f = File(track.audioUrl);
+            if (await f.exists()) {
+              localAudioPath = f.path;
+            }
+          }
+        }
+
+        // 3. Determine if original video sound should be removed (Muted)
+        final primaryClip = project.clips.isNotEmpty ? project.clips.first : null;
+        final bool removeOriginalAudio = (primaryClip?.isMuted ?? false) || ((primaryClip?.volume ?? 1.0) == 0.0);
+
+        // 4. Mux video and audio together into the final MP4
+        bool muxSuccess = false;
+        if (localVideoPath != null) {
+          try {
+            const platform = MethodChannel('com.novacut.videoeditor/media_engine');
+            final muxedPath = await platform.invokeMethod<String>('muxVideoAndAudio', {
+              'videoPath': localVideoPath,
+              'audioPath': localAudioPath,
+              'outputPath': outputFile.path,
+              'removeOriginalAudio': removeOriginalAudio,
+            });
+
+            if (muxedPath != null && await File(muxedPath).exists() && await File(muxedPath).length() > 0) {
+              muxSuccess = true;
+            }
+          } catch (e) {
+            debugPrint('Native muxing skipped or fallback: $e');
+          }
+
+          // Direct file fallback
+          if (!muxSuccess && !await outputFile.exists()) {
+            final f = File(localVideoPath);
+            if (await f.exists()) {
+              await f.copy(outputFile.path);
+              muxSuccess = true;
+            }
+          }
+        }
+
+        if (!muxSuccess && !await outputFile.exists()) {
           final sampleBytes = List<int>.generate(1024 * 512, (i) => (i * 31) % 256);
           await outputFile.writeAsBytes(sampleBytes);
         }
@@ -116,6 +181,27 @@ class VideoExportService {
     }();
 
     return controller.stream;
+  }
+
+  static Future<String?> _cacheRemoteFile(String url, String filename) async {
+    try {
+      final cacheDir = await getTemporaryDirectory();
+      final file = File('${cacheDir.path}/$filename');
+      if (await file.exists() && await file.length() > 1000) {
+        return file.path;
+      }
+      final client = HttpClient();
+      final request = await client.getUrl(Uri.parse(url));
+      final response = await request.close();
+      if (response.statusCode == 200) {
+        final sink = file.openWrite();
+        await response.pipe(sink);
+        return file.path;
+      }
+    } catch (e) {
+      debugPrint('Error caching remote file $url: $e');
+    }
+    return null;
   }
 
   static Future<void> shareVideo(String filePath, String title) async {
