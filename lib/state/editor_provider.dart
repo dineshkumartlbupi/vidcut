@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:video_player/video_player.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:uuid/uuid.dart';
@@ -447,6 +449,58 @@ class EditorProvider extends ChangeNotifier {
     _currentProject!.clips[clipIndex].transition = transition;
     saveCurrentProject();
     notifyListeners();
+  }
+
+  void setTransitionToAll(VideoTransitionType transition) {
+    if (_currentProject == null) return;
+    _recordHistory();
+    for (final clip in _currentProject!.clips) {
+      clip.transition = transition;
+    }
+    saveCurrentProject();
+    notifyListeners();
+  }
+
+  void reverseClip([int? clipIndex]) {
+    final idx = clipIndex ?? _selectedClipIndex;
+    if (_currentProject == null || idx >= _currentProject!.clips.length) return;
+    _recordHistory();
+    final clip = _currentProject!.clips[idx];
+    final originalStart = clip.trimStartMs;
+    clip.trimStartMs = (clip.durationMs - clip.trimEndMs).clamp(0, clip.durationMs);
+    clip.trimEndMs = (clip.durationMs - originalStart).clamp(clip.trimStartMs + 200, clip.durationMs);
+    saveCurrentProject();
+    notifyListeners();
+  }
+
+  Future<bool> extractAndAddAudioFromVideo(String videoPath, [String? title]) async {
+    if (_currentProject == null) return false;
+    try {
+      final cacheDir = await getTemporaryDirectory();
+      final id = const Uuid().v4();
+      final outputPath = '${cacheDir.path}/extracted_${id}.m4a';
+      const platform = MethodChannel('com.novacut.videoeditor/media_engine');
+      final resultPath = await platform.invokeMethod<String>('extractAudioFromVideo', {
+        'videoPath': videoPath,
+        'outputPath': outputPath,
+      });
+
+      if (resultPath != null && await File(resultPath).exists() && await File(resultPath).length() > 0) {
+        final track = AudioTrack(
+          id: id,
+          title: title ?? 'Extracted Audio',
+          artist: 'Extracted from Video',
+          audioUrl: resultPath,
+          durationMs: _currentProject!.totalDurationMs,
+          volume: 1.0,
+        );
+        addAudioTrack(track);
+        return true;
+      }
+    } catch (e) {
+      debugPrint('Error extracting audio from video: $e');
+    }
+    return false;
   }
 
   void setAspectRatio(AspectRatioPreset ratio) {

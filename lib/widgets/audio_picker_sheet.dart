@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 import '../state/editor_provider.dart';
 import '../models/audio_track.dart';
@@ -152,24 +153,42 @@ class _AudioPickerSheetState extends State<AudioPickerSheet> with SingleTickerPr
             ),
           ),
 
-          // Custom Import button
+          // Action Buttons: Extract Audio & Import Custom Audio
           Padding(
-            padding: const EdgeInsets.all(12),
-            child: SizedBox(
-              width: double.infinity,
-              height: 44,
-              child: OutlinedButton.icon(
-                icon: const Icon(Icons.file_upload_outlined, size: 18, color: AppTheme.primaryLight),
-                label: const Text(
-                  'Import Custom Audio (MP3/WAV)',
-                  style: TextStyle(color: Colors.white, fontSize: 13),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 42,
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.music_video_rounded, size: 16),
+                      label: const Text('Extract from Video', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.cyan,
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      onPressed: _extractAudioFromGalleryVideo,
+                    ),
+                  ),
                 ),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AppTheme.primary, width: 1.2),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: SizedBox(
+                    height: 42,
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.file_upload_outlined, size: 16, color: AppTheme.primaryLight),
+                      label: const Text('Import MP3', style: TextStyle(color: Colors.white, fontSize: 12)),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppTheme.primary, width: 1.2),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      onPressed: _pickCustomAudio,
+                    ),
+                  ),
                 ),
-                onPressed: _pickCustomAudio,
-              ),
+              ],
             ),
           ),
         ],
@@ -337,5 +356,38 @@ class _AudioPickerSheetState extends State<AudioPickerSheet> with SingleTickerPr
         widget.provider.setActiveTool('none');
       }
     } catch (_) {}
+  }
+
+  Future<void> _extractAudioFromGalleryVideo() async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? video = await picker.pickVideo(source: ImageSource.gallery);
+      if (video != null && mounted) {
+        final success = await widget.provider.extractAndAddAudioFromVideo(
+          video.path,
+          'Extracted: ${video.name}',
+        );
+        if (mounted) {
+          if (success) {
+            widget.provider.setActiveTool('none');
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Extracted high-quality audio from "${video.name}"!'),
+                backgroundColor: AppTheme.emeraldGreen,
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('No audio track found in selected video.'),
+                backgroundColor: AppTheme.redPlayhead,
+              ),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error picking video for audio extraction: $e');
+    }
   }
 }

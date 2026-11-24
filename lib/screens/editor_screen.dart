@@ -15,6 +15,7 @@ import '../widgets/audio_picker_sheet.dart';
 import '../widgets/speed_selector_sheet.dart';
 import '../widgets/canvas_ratio_sheet.dart';
 import '../widgets/text_editor_dialog.dart';
+import '../widgets/transition_selector_sheet.dart';
 import 'media_picker_screen.dart';
 import 'export_screen.dart';
 
@@ -165,6 +166,8 @@ class EditorScreen extends StatelessWidget {
         return CanvasRatioSheet(provider: provider);
       case 'stickers':
         return _buildStickersDrawer(context, provider);
+      case 'transition':
+        return TransitionSelectorSheet(provider: provider);
       default:
         return const SizedBox.shrink();
     }
@@ -176,25 +179,27 @@ class EditorScreen extends StatelessWidget {
       {'id': 'split', 'name': 'Split', 'icon': Icons.call_split_rounded},
       {'id': 'canvas', 'name': 'Canvas', 'icon': Icons.aspect_ratio_rounded},
       {'id': 'speed', 'name': 'Speed', 'icon': Icons.speed_rounded},
+      {'id': 'transition', 'name': 'Transitions', 'icon': Icons.auto_awesome_motion_rounded},
       {'id': 'filters', 'name': 'Filters', 'icon': Icons.auto_fix_high_rounded},
       {'id': 'music', 'name': 'Audio', 'icon': Icons.audiotrack_rounded},
       {'id': 'text', 'name': 'Text', 'icon': Icons.title_rounded},
       {'id': 'stickers', 'name': 'Stickers', 'icon': Icons.layers_rounded},
       {'id': 'mute', 'name': isMuted ? 'Unmute' : 'Mute', 'icon': isMuted ? Icons.volume_off_rounded : Icons.volume_up_rounded},
       {'id': 'add_photo', 'name': '+ Photo', 'icon': Icons.add_photo_alternate_rounded},
+      {'id': 'reverse', 'name': 'Reverse', 'icon': Icons.replay_rounded},
       {'id': 'rotate', 'name': 'Rotate', 'icon': Icons.rotate_right_rounded},
       {'id': 'flip', 'name': 'Flip', 'icon': Icons.flip_rounded},
     ];
 
     return Container(
-      height: 74,
+      height: 76,
       decoration: const BoxDecoration(
         color: AppTheme.surface,
         border: Border(top: BorderSide(color: AppTheme.stroke)),
       ),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
         itemCount: tools.length,
         itemBuilder: (context, index) {
           final tool = tools[index];
@@ -241,6 +246,15 @@ class EditorScreen extends StatelessWidget {
                 provider.rotateClip(provider.selectedClipIndex);
               } else if (toolId == 'flip') {
                 provider.flipClip(provider.selectedClipIndex);
+              } else if (toolId == 'reverse') {
+                provider.reverseClip(provider.selectedClipIndex);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Reversed clip playback! (Rewind Mode) ⏪'),
+                    duration: Duration(milliseconds: 1200),
+                    backgroundColor: AppTheme.primary,
+                  ),
+                );
               } else {
                 provider.setActiveTool(isSelected ? 'none' : toolId);
               }
@@ -258,12 +272,12 @@ class EditorScreen extends StatelessWidget {
                 children: [
                   Icon(
                     tool['icon'] as IconData,
-                    size: 20,
+                    size: 19,
                     color: (toolId == 'mute' && isMuted)
                         ? AppTheme.pinkNeon
                         : (isSelected ? AppTheme.primaryLight : Colors.white),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     tool['name'] as String,
                     style: TextStyle(

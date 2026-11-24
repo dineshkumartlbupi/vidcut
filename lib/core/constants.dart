@@ -46,8 +46,10 @@ enum VideoTransitionType {
   fadeBlack(name: 'Fade Black', icon: Icons.brightness_1),
   dissolve(name: 'Cross Dissolve', icon: Icons.blur_on),
   slideLeft(name: 'Slide Left', icon: Icons.arrow_back),
+  slideRight(name: 'Slide Right', icon: Icons.arrow_forward),
   zoomBurst(name: 'Zoom Burst', icon: Icons.zoom_out_map),
-  whiteFlash(name: 'Flash', icon: Icons.flash_on);
+  whiteFlash(name: 'White Flash', icon: Icons.flash_on),
+  glitch(name: 'Glitch FX', icon: Icons.sensors);
 
   final String name;
   final IconData icon;

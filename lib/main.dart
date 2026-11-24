@@ -35,7 +35,7 @@ class NovaCutApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'NovaCut: AI Video Editor & Reel Maker',
+      title: 'NovaCut: Video Editor & Maker',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
       home: const HomeScreen(),

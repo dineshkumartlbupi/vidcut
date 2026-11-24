@@ -49,6 +49,33 @@ class MainActivity : FlutterActivity() {
                         }
                     }.start()
                 }
+                "extractAudioFromVideo" -> {
+                    val videoPath = call.argument<String>("videoPath")
+                    val outputPath = call.argument<String>("outputPath")
+
+                    if (videoPath == null || outputPath == null) {
+                        result.error("INVALID_ARGS", "videoPath and outputPath required", null)
+                        return@setMethodCallHandler
+                    }
+
+                    Thread {
+                        try {
+                            val success = processExtractAudio(videoPath, outputPath)
+                            runOnUiThread {
+                                if (success) {
+                                    result.success(outputPath)
+                                } else {
+                                    result.error("EXTRACT_FAILED", "No audio track found in video", null)
+                                }
+                            }
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error in processExtractAudio", e)
+                            runOnUiThread {
+                                result.error("EXTRACT_EXCEPTION", e.message, null)
+                            }
+                        }
+                    }.start()
+                }
                 else -> result.notImplemented()
             }
         }
@@ -190,6 +217,65 @@ class MainActivity : FlutterActivity() {
             muxer.release()
         } catch (e: Exception) {
             Log.e(TAG, "Error stopping muxer", e)
+        }
+
+        return File(outputPath).exists() && File(outputPath).length() > 0
+    }
+
+    private fun processExtractAudio(videoPath: String, outputPath: String): Boolean {
+        val outputFile = File(outputPath)
+        outputFile.parentFile?.mkdirs()
+        if (outputFile.exists()) {
+            outputFile.delete()
+        }
+
+        val extractor = MediaExtractor()
+        extractor.setDataSource(videoPath)
+
+        var audioTrackIndex = -1
+        for (i in 0 until extractor.trackCount) {
+            val format = extractor.getTrackFormat(i)
+            val mime = format.getString(MediaFormat.KEY_MIME) ?: ""
+            if (mime.startsWith("audio/")) {
+                audioTrackIndex = i
+                break
+            }
+        }
+
+        if (audioTrackIndex == -1) {
+            extractor.release()
+            return false
+        }
+
+        extractor.selectTrack(audioTrackIndex)
+        val format = extractor.getTrackFormat(audioTrackIndex)
+
+        val muxer = MediaMuxer(outputPath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+        val muxerTrack = muxer.addTrack(format)
+        muxer.start()
+
+        val bufferSize = 1024 * 1024
+        val buffer = ByteBuffer.allocate(bufferSize)
+        val bufferInfo = MediaCodec.BufferInfo()
+
+        while (true) {
+            bufferInfo.offset = 0
+            bufferInfo.size = extractor.readSampleData(buffer, 0)
+            if (bufferInfo.size < 0) {
+                break
+            }
+            bufferInfo.presentationTimeUs = extractor.sampleTime
+            bufferInfo.flags = extractor.sampleFlags
+            muxer.writeSampleData(muxerTrack, buffer, bufferInfo)
+            extractor.advance()
+        }
+
+        extractor.release()
+        try {
+            muxer.stop()
+            muxer.release()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error stopping muxer in extractAudio", e)
         }
 
         return File(outputPath).exists() && File(outputPath).length() > 0

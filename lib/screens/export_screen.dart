@@ -127,7 +127,83 @@ class _ExportScreenState extends State<ExportScreen> {
           ),
         ),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
+
+        // 100% Free Pro VIP Banner (No Watermark + 4K 60FPS)
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.primary.withOpacity(0.2),
+                AppTheme.pinkNeon.withOpacity(0.15),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppTheme.pinkNeon.withOpacity(0.4)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Expanded(
+                    child: Row(
+                      children: [
+                        Icon(Icons.verified_rounded, size: 16, color: AppTheme.pinkNeon),
+                        SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            'PRO UNLOCKED • FREE',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w900,
+                              color: AppTheme.pinkNeon,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppTheme.emeraldGreen.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.check, size: 11, color: AppTheme.emeraldGreen),
+                        SizedBox(width: 3),
+                        Text(
+                          'NO WATERMARK',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.emeraldGreen,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Full 4K Ultra HD 60FPS rendering, zero brand watermarks, and high-bitrate studio audio with no subscription fees.',
+                style: TextStyle(fontSize: 11, color: AppTheme.textSecondary, height: 1.3),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 20),
 
         // Resolution Selector
         const Text(

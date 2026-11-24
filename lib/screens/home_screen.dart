@@ -42,6 +42,18 @@ class HomeScreen extends StatelessWidget {
               'NovaCut',
               style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: 0.5),
             ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                gradient: AppTheme.accentGradient,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: const Text(
+                'PRO FREE',
+                style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.white),
+              ),
+            ),
           ],
         ),
         actions: [
@@ -303,6 +315,46 @@ class HomeScreen extends StatelessWidget {
                 );
               },
             ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.photo_library_rounded, size: 14, color: AppTheme.pinkNeon),
+                  label: const Text('📸 Photos to Reel', style: TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.bold)),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: AppTheme.pinkNeon.withOpacity(0.5)),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const MediaPickerScreen()),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.music_video_rounded, size: 14, color: AppTheme.cyan),
+                  label: const Text('🎵 Extract Audio', style: TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.bold)),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: AppTheme.cyan.withOpacity(0.5)),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const MediaPickerScreen()),
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
         ],
       ),
