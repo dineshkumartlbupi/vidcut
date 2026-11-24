@@ -47,170 +47,174 @@ class _TimelineViewState extends State<TimelineView> {
               color: AppTheme.surfaceElevated,
               border: Border(bottom: BorderSide(color: AppTheme.stroke, width: 1)),
             ),
-            child: Row(
-              children: [
-                // Undo button (Zero-fear editing)
-                IconButton(
-                  icon: Icon(
-                    Icons.undo_rounded,
-                    size: 19,
-                    color: widget.provider.canUndo ? Colors.white : Colors.white24,
-                  ),
-                  tooltip: 'Undo',
-                  visualDensity: VisualDensity.compact,
-                  onPressed: widget.provider.canUndo ? () => widget.provider.undo() : null,
-                ),
-
-                // Redo button
-                IconButton(
-                  icon: Icon(
-                    Icons.redo_rounded,
-                    size: 19,
-                    color: widget.provider.canRedo ? Colors.white : Colors.white24,
-                  ),
-                  tooltip: 'Redo',
-                  visualDensity: VisualDensity.compact,
-                  onPressed: widget.provider.canRedo ? () => widget.provider.redo() : null,
-                ),
-
-                const SizedBox(width: 4),
-
-                // Current Playhead Time display
-                Text(
-                  _formatTimeDisplay(widget.provider.currentTimeMs),
-                  style: const TextStyle(
-                    color: AppTheme.cyan,
-                    fontSize: 12,
-                    fontFamily: 'monospace',
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                Text(
-                  ' / ${project.formattedDuration}',
-                  style: const TextStyle(
-                    color: AppTheme.textMuted,
-                    fontSize: 11,
-                    fontFamily: 'monospace',
-                  ),
-                ),
-
-                const Spacer(),
-
-                // Big prominent "✂️ Split Here" Action Button (Zero confusion)
-                GestureDetector(
-                  onTap: () {
-                    widget.provider.splitClipAtPlayhead();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Row(
-                          children: [
-                            Icon(Icons.check_circle, color: AppTheme.cyan, size: 16),
-                            SizedBox(width: 8),
-                            Text('Video split right at playhead!'),
-                          ],
-                        ),
-                        duration: Duration(milliseconds: 1000),
-                        backgroundColor: AppTheme.surfaceElevated,
-                      ),
-                    );
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primary,
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.primary.withOpacity(0.4),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.call_split_rounded, size: 13, color: Colors.white),
-                        SizedBox(width: 4),
-                        Text(
-                          'Split Here',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(width: 6),
-
-                // Delete selected clip
-                if (project.clips.length > 1)
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                children: [
+                  // Undo button (Zero-fear editing)
                   IconButton(
-                    icon: const Icon(Icons.delete_outline_rounded, size: 18, color: AppTheme.redPlayhead),
-                    tooltip: 'Delete Selected Clip',
+                    icon: Icon(
+                      Icons.undo_rounded,
+                      size: 19,
+                      color: widget.provider.canUndo ? Colors.white : Colors.white24,
+                    ),
+                    tooltip: 'Undo',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: widget.provider.canUndo ? () => widget.provider.undo() : null,
+                  ),
+
+                  // Redo button
+                  IconButton(
+                    icon: Icon(
+                      Icons.redo_rounded,
+                      size: 19,
+                      color: widget.provider.canRedo ? Colors.white : Colors.white24,
+                    ),
+                    tooltip: 'Redo',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: widget.provider.canRedo ? () => widget.provider.redo() : null,
+                  ),
+
+                  const SizedBox(width: 4),
+
+                  // Current Playhead Time display
+                  Text(
+                    _formatTimeDisplay(widget.provider.currentTimeMs),
+                    style: const TextStyle(
+                      color: AppTheme.cyan,
+                      fontSize: 12,
+                      fontFamily: 'monospace',
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  Text(
+                    ' / ${project.formattedDuration}',
+                    style: const TextStyle(
+                      color: AppTheme.textMuted,
+                      fontSize: 11,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+
+                  const SizedBox(width: 14),
+
+                  // Big prominent "✂️ Split Here" Action Button (Zero confusion)
+                  GestureDetector(
+                    onTap: () {
+                      widget.provider.splitClipAtPlayhead();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Row(
+                            children: [
+                              Icon(Icons.check_circle, color: AppTheme.cyan, size: 16),
+                              SizedBox(width: 8),
+                              Text('Video split right at playhead!'),
+                            ],
+                          ),
+                          duration: Duration(milliseconds: 1000),
+                          backgroundColor: AppTheme.surfaceElevated,
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTheme.primary.withOpacity(0.4),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.call_split_rounded, size: 13, color: Colors.white),
+                          SizedBox(width: 4),
+                          Text(
+                            'Split Here',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(width: 6),
+
+                  // Delete selected clip
+                  if (project.clips.length > 1)
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline_rounded, size: 18, color: AppTheme.redPlayhead),
+                      tooltip: 'Delete Selected Clip',
+                      visualDensity: VisualDensity.compact,
+                      onPressed: () {
+                        widget.provider.removeClip(widget.provider.selectedClipIndex);
+                      },
+                    ),
+
+                  // Zoom Out
+                  IconButton(
+                    icon: const Icon(Icons.remove, size: 16, color: Colors.white70),
                     visualDensity: VisualDensity.compact,
                     onPressed: () {
-                      widget.provider.removeClip(widget.provider.selectedClipIndex);
+                      setState(() {
+                        _pixelsPerSecond = (_pixelsPerSecond - 8.0).clamp(18.0, 70.0);
+                      });
                     },
                   ),
 
-                // Zoom Out
-                IconButton(
-                  icon: const Icon(Icons.remove, size: 16, color: Colors.white70),
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () {
-                    setState(() {
-                      _pixelsPerSecond = (_pixelsPerSecond - 8.0).clamp(18.0, 70.0);
-                    });
-                  },
-                ),
+                  // Zoom In
+                  IconButton(
+                    icon: const Icon(Icons.add, size: 16, color: Colors.white70),
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () {
+                      setState(() {
+                        _pixelsPerSecond = (_pixelsPerSecond + 8.0).clamp(18.0, 70.0);
+                      });
+                    },
+                  ),
 
-                // Zoom In
-                IconButton(
-                  icon: const Icon(Icons.add, size: 16, color: Colors.white70),
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () {
-                    setState(() {
-                      _pixelsPerSecond = (_pixelsPerSecond + 8.0).clamp(18.0, 70.0);
-                    });
-                  },
-                ),
+                  const SizedBox(width: 4),
 
-                const SizedBox(width: 4),
-
-                // Add Clip button
-                InkWell(
-                  onTap: widget.onAddClip,
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: AppTheme.surfaceCard,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppTheme.stroke, width: 1),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.add, size: 14, color: AppTheme.primaryLight),
-                        SizedBox(width: 4),
-                        Text(
-                          '+ Clip',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryLight,
+                  // Add Clip button
+                  InkWell(
+                    onTap: widget.onAddClip,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceCard,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppTheme.stroke, width: 1),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.add, size: 14, color: AppTheme.primaryLight),
+                          SizedBox(width: 4),
+                          Text(
+                            '+ Clip',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.primaryLight,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
 
@@ -341,17 +345,23 @@ class _TimelineViewState extends State<TimelineView> {
           children: [
             // Thumbnail Filmstrip pattern background
             Positioned.fill(
-              child: Opacity(
-                opacity: 0.25,
-                child: Row(
-                  children: List.generate(
-                    (width / 30).ceil(),
-                    (_) => Container(
-                      width: 28,
-                      margin: const EdgeInsets.only(right: 2),
-                      color: Colors.white12,
-                      child: const Center(
-                        child: Icon(Icons.movie_outlined, size: 14, color: Colors.white30),
+              child: ClipRect(
+                child: Opacity(
+                  opacity: 0.25,
+                  child: OverflowBox(
+                    alignment: Alignment.centerLeft,
+                    maxWidth: double.infinity,
+                    child: Row(
+                      children: List.generate(
+                        (width / 30).ceil(),
+                        (_) => Container(
+                          width: 28,
+                          margin: const EdgeInsets.only(right: 2),
+                          color: Colors.white12,
+                          child: const Center(
+                            child: Icon(Icons.movie_outlined, size: 14, color: Colors.white30),
+                          ),
+                        ),
                       ),
                     ),
                   ),

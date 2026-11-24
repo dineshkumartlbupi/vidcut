@@ -182,14 +182,14 @@ class EditorScreen extends StatelessWidget {
     ];
 
     return Container(
-      height: 68,
+      height: 74,
       decoration: const BoxDecoration(
         color: AppTheme.surface,
         border: Border(top: BorderSide(color: AppTheme.stroke)),
       ),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         itemCount: tools.length,
         itemBuilder: (context, index) {
           final tool = tools[index];
@@ -383,11 +383,12 @@ class EditorScreen extends StatelessWidget {
               children: [
                 const Icon(Icons.lightbulb_rounded, color: AppTheme.cyan, size: 22),
                 const SizedBox(width: 8),
-                const Text(
-                  'Quick Editing Tips (Zero Effort!)',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                const Expanded(
+                  child: Text(
+                    'Quick Editing Tips (Zero Effort!)',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
                 ),
-                const Spacer(),
                 IconButton(
                   icon: const Icon(Icons.close, size: 20, color: Colors.white70),
                   onPressed: () => Navigator.pop(ctx),

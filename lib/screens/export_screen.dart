@@ -148,53 +148,56 @@ class _ExportScreenState extends State<ExportScreen> {
                 width: isSelected ? 2 : 1,
               ),
             ),
-            child: RadioListTile<ExportResolution>(
-              value: res,
-              groupValue: _selectedResolution,
-              activeColor: AppTheme.primaryLight,
-              onChanged: (val) {
-                if (val != null) setState(() => _selectedResolution = val);
-              },
-              title: Row(
-                children: [
-                  Text(
-                    res.label,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: isSelected ? Colors.white : AppTheme.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  if (res == ExportResolution.res1080p)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppTheme.cyan.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Text(
-                        'RECOMMENDED',
-                        style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppTheme.cyan),
+            child: Material(
+              color: Colors.transparent,
+              child: RadioListTile<ExportResolution>(
+                value: res,
+                groupValue: _selectedResolution,
+                activeColor: AppTheme.primaryLight,
+                onChanged: (val) {
+                  if (val != null) setState(() => _selectedResolution = val);
+                },
+                title: Row(
+                  children: [
+                    Text(
+                      res.label,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: isSelected ? Colors.white : AppTheme.textPrimary,
                       ),
                     ),
-                  if (res == ExportResolution.res4k)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppTheme.amberHandle.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(6),
+                    const SizedBox(width: 8),
+                    if (res == ExportResolution.res1080p)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppTheme.cyan.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          'RECOMMENDED',
+                          style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppTheme.cyan),
+                        ),
                       ),
-                      child: const Text(
-                        'ULTRA HD',
-                        style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppTheme.amberHandle),
+                    if (res == ExportResolution.res4k)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppTheme.amberHandle.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          'ULTRA HD',
+                          style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppTheme.amberHandle),
+                        ),
                       ),
-                    ),
-                ],
-              ),
-              subtitle: Text(
-                '${res.name} • ${res.width}x${res.height}',
-                style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                  ],
+                ),
+                subtitle: Text(
+                  '${res.name} • ${res.width}x${res.height}',
+                  style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                ),
               ),
             ),
           );
