@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:uuid/uuid.dart';
+
 import '../state/editor_provider.dart';
 import '../models/project.dart';
 import '../models/video_clip.dart';
+import '../models/audio_track.dart';
+import '../models/text_layer.dart';
+import '../core/constants.dart';
 import '../core/sample_assets.dart';
 import '../core/theme.dart';
 import 'editor_screen.dart';
@@ -40,6 +45,29 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
         actions: [
+          // Beginner's Quick Guide pill
+          GestureDetector(
+            onTap: () => _showQuickGuide(context),
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppTheme.primary.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppTheme.primaryLight, width: 1),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.lightbulb_outline, size: 14, color: AppTheme.cyan),
+                  SizedBox(width: 4),
+                  Text(
+                    'Easy Guide',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.settings_outlined, color: Colors.white70),
             onPressed: () => _showSettings(context),
@@ -52,12 +80,49 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Hero "New Project" card
+            // 1. Beginner 3-Step "No Learning Curve" Helper Banner
+            _buildBeginnerGuideBanner(context),
+
+            const SizedBox(height: 18),
+
+            // 2. Hero "New Project" Action Card
             _buildNewProjectHero(context, provider),
 
             const SizedBox(height: 24),
 
-            // Quick Tools Bar
+            // 3. "1-Tap Viral Reel Themes" (Zero-effort instant creation)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.auto_awesome, size: 18, color: AppTheme.primaryLight),
+                    SizedBox(width: 8),
+                    Text(
+                      '1-Tap Viral Reel Presets',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppTheme.emeraldGreen.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Text(
+                    'ZERO EFFORT',
+                    style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppTheme.emeraldGreen),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _buildViralThemesCarousel(context, provider),
+
+            const SizedBox(height: 24),
+
+            // 4. Quick Studio Tools
             const Text(
               'Quick Studio Tools',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
@@ -67,16 +132,16 @@ class HomeScreen extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            // Sample Stock Clips Carousel
+            // 5. Stock Clips Showcase
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'Start with Ready-to-Edit Clips',
+                  'Explore Ready Clips',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
                 Text(
-                  '${SampleAssets.stockVideos.length} Clips',
+                  '${SampleAssets.stockVideos.length} Stock Clips',
                   style: const TextStyle(fontSize: 12, color: AppTheme.cyan, fontWeight: FontWeight.bold),
                 ),
               ],
@@ -86,7 +151,7 @@ class HomeScreen extends StatelessWidget {
 
             const SizedBox(height: 28),
 
-            // Recent Projects
+            // 6. Draft Projects
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -121,22 +186,66 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildBeginnerGuideBanner(BuildContext context) {
+    return GestureDetector(
+      onTap: () => _showQuickGuide(context),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceCard,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppTheme.cyan.withOpacity(0.3), width: 1),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: AppTheme.cyan.withOpacity(0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.flash_on_rounded, size: 16, color: AppTheme.cyan),
+            ),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Edit in 3 Simple Steps',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                  Text(
+                    '1. Choose video → 2. Add Filter & Beat → 3. Export 4K',
+                    style: TextStyle(fontSize: 10, color: AppTheme.textSecondary),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, size: 18, color: AppTheme.textMuted),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildNewProjectHero(BuildContext context, EditorProvider provider) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF2E1065), Color(0xFF1E1B4B), Color(0xFF0F172A)],
+          colors: [Color(0xFF3B0764), Color(0xFF1E1B4B), Color(0xFF0F172A)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppTheme.primary.withOpacity(0.5), width: 1.5),
+        border: Border.all(color: AppTheme.primary.withOpacity(0.6), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primary.withOpacity(0.25),
-            blurRadius: 20,
+            color: AppTheme.primary.withOpacity(0.3),
+            blurRadius: 24,
             offset: const Offset(0, 8),
           ),
         ],
@@ -154,7 +263,7 @@ class HomeScreen extends StatelessWidget {
                   border: Border.all(color: AppTheme.cyan.withOpacity(0.4)),
                 ),
                 child: const Text(
-                  'PRO 4K ENGINE',
+                  'PRO REEL ENGINE',
                   style: TextStyle(color: AppTheme.cyan, fontSize: 10, fontWeight: FontWeight.w800),
                 ),
               ),
@@ -164,12 +273,12 @@ class HomeScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           const Text(
-            'Create Cinematic Video',
+            'Create Viral Reel in Seconds',
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white),
           ),
           const SizedBox(height: 6),
           const Text(
-            'Multi-track timeline, trending transitions, music library, and instant 4K export for Reels & Shorts.',
+            'No learning required. Pick your video, tap a cinematic filter, add trending beats, and export in crystal-clear 4K.',
             style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.4),
           ),
           const SizedBox(height: 18),
@@ -179,7 +288,7 @@ class HomeScreen extends StatelessWidget {
             child: ElevatedButton.icon(
               icon: const Icon(Icons.add_rounded, size: 22),
               label: const Text(
-                'Start New Project',
+                'Start New Video Project',
                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
               ),
               style: ElevatedButton.styleFrom(
@@ -200,11 +309,192 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildViralThemesCarousel(BuildContext context, EditorProvider provider) {
+    final themes = [
+      {
+        'title': 'Cyberpunk Neon',
+        'subtitle': 'Futuristic glow & trap beat',
+        'sample': SampleAssets.stockVideos[0],
+        'music': SampleAssets.musicTracks[1],
+        'filter': 'cyberpunk',
+        'text': 'Neon Nights ✨',
+        'color': AppTheme.primary,
+      },
+      {
+        'title': 'Teal & Orange Cinema',
+        'subtitle': 'Hollywood beach blockbuster',
+        'sample': SampleAssets.stockVideos[1],
+        'music': SampleAssets.musicTracks[2],
+        'filter': 'teal_orange',
+        'text': 'Ocean Dreams 🌊',
+        'color': AppTheme.cyan,
+      },
+      {
+        'title': 'Vintage Lo-Fi Vlog',
+        'subtitle': 'Warm 90s coffee aesthetic',
+        'sample': SampleAssets.stockVideos[4],
+        'music': SampleAssets.musicTracks[0],
+        'filter': 'vintage',
+        'text': 'Morning Coffee ☕',
+        'color': AppTheme.amberHandle,
+      },
+      {
+        'title': 'High Energy Action',
+        'subtitle': 'Fast-paced street hype',
+        'sample': SampleAssets.stockVideos[2],
+        'music': SampleAssets.musicTracks[3],
+        'filter': 'vibrant',
+        'text': 'Workout Grind 💯',
+        'color': AppTheme.redPlayhead,
+      },
+    ];
+
+    return SizedBox(
+      height: 160,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: themes.length,
+        itemBuilder: (context, index) {
+          final t = themes[index];
+          final sample = t['sample'] as SampleVideoAsset;
+          final music = t['music'] as SampleAudioAsset;
+          final themeColor = t['color'] as Color;
+
+          return GestureDetector(
+            onTap: () async {
+              // 1-Tap creation: creates full configured project with video, music, filter, and text layer
+              final proj = VideoProject(
+                id: const Uuid().v4(),
+                name: '${t['title']} Reel',
+                thumbnailUrl: sample.thumbnailUrl,
+                aspectRatio: AspectRatioPreset.ratio9_16,
+                clips: [
+                  VideoClip(
+                    id: const Uuid().v4(),
+                    path: sample.videoUrl,
+                    isRemote: true,
+                    title: sample.title,
+                    thumbnailUrl: sample.thumbnailUrl,
+                    durationMs: (sample.durationSeconds * 1000).toInt(),
+                    filterId: t['filter'] as String,
+                  ),
+                ],
+                audioTracks: [
+                  AudioTrack(
+                    id: const Uuid().v4(),
+                    title: music.title,
+                    artist: music.artist,
+                    audioUrl: music.audioUrl,
+                    durationMs: (music.durationSeconds * 1000).toInt(),
+                    volume: 0.85,
+                  ),
+                ],
+                textLayers: [
+                  TextLayer(
+                    id: const Uuid().v4(),
+                    text: t['text'] as String,
+                    xPercent: 0.5,
+                    yPercent: 0.35,
+                    fontSize: 26,
+                  ),
+                ],
+              );
+
+              await provider.createNewProject(
+                name: proj.name,
+                ratio: proj.aspectRatio,
+                initialClips: proj.clips,
+              );
+              provider.currentProject?.audioTracks = proj.audioTracks;
+              provider.currentProject?.textLayers = proj.textLayers;
+              await provider.saveCurrentProject();
+
+              if (context.mounted) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const EditorScreen()),
+                );
+              }
+            },
+            child: Container(
+              width: 180,
+              margin: const EdgeInsets.only(right: 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: themeColor.withOpacity(0.6), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: themeColor.withOpacity(0.2),
+                    blurRadius: 10,
+                  ),
+                ],
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  CachedNetworkImage(imageUrl: sample.thumbnailUrl, fit: BoxFit.cover),
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.black54, Colors.transparent, Colors.black.withOpacity(0.9)],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: themeColor,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text(
+                        '1-TAP READY',
+                        style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 10,
+                    left: 10,
+                    right: 10,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          t['title'] as String,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
+                        ),
+                        Text(
+                          t['subtitle'] as String,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildQuickToolsRow(BuildContext context, EditorProvider provider) {
     final tools = [
-      {'icon': Icons.content_cut_rounded, 'name': 'Trim & Cut', 'color': AppTheme.amberHandle},
-      {'icon': Icons.speed_rounded, 'name': 'Speed Curve', 'color': AppTheme.cyan},
-      {'icon': Icons.auto_fix_high_rounded, 'name': 'Color LUTs', 'color': AppTheme.primaryLight},
+      {'icon': Icons.content_cut_rounded, 'name': 'Trim Video', 'color': AppTheme.amberHandle},
+      {'icon': Icons.speed_rounded, 'name': 'Slow-Mo', 'color': AppTheme.cyan},
+      {'icon': Icons.auto_fix_high_rounded, 'name': 'Color Filters', 'color': AppTheme.primaryLight},
       {'icon': Icons.audiotrack_rounded, 'name': 'Music & SFX', 'color': AppTheme.emeraldGreen},
     ];
 
@@ -406,13 +696,109 @@ class HomeScreen extends StatelessWidget {
             ),
             SizedBox(height: 4),
             Text(
-              'Tap Start New Project or choose a stock clip above to begin!',
+              'Tap Start New Project or choose a 1-Tap Theme above to begin!',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  void _showQuickGuide(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.surfaceElevated,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(22, 20, 22, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.auto_awesome, color: AppTheme.cyan, size: 22),
+                        SizedBox(width: 8),
+                        Text(
+                          'Quick Editing Guide',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white70),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildGuideStep('1', 'Drag the Red Line', 'Move the playhead to the exact point in your video where you want to edit or cut.'),
+                const SizedBox(height: 12),
+                _buildGuideStep('2', 'Tap "Split" to Cut', 'One tap slices your video into two segments so you can delete or style parts independently.'),
+                const SizedBox(height: 12),
+                _buildGuideStep('3', 'Add Filters, Music & Text', 'Choose from Hollywood color grades, royalty-free audio tracks, and animated viral text overlays.'),
+                const SizedBox(height: 12),
+                _buildGuideStep('4', 'Export in 4K', 'Tap Export in the top right corner to instantly render and share to Instagram, TikTok, or YouTube.'),
+                const SizedBox(height: 18),
+                SizedBox(
+                  width: double.infinity,
+                  height: 46,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('Got it! Let\'s Edit ✨'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildGuideStep(String number, String title, String description) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 26,
+          height: 26,
+          decoration: const BoxDecoration(
+            color: AppTheme.primary,
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(
+              number,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                description,
+                style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary, height: 1.3),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

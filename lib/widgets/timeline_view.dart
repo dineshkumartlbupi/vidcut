@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../state/editor_provider.dart';
 import '../core/theme.dart';
 import '../core/constants.dart';
+import 'text_editor_dialog.dart';
 
 class TimelineView extends StatefulWidget {
   final EditorProvider provider;
@@ -38,53 +39,113 @@ class _TimelineViewState extends State<TimelineView> {
       ),
       child: Column(
         children: [
-          // 1. Timeline Quick Tools Bar (Split, Delete, Add, Zoom)
+          // 1. Timeline Quick Tools Bar (Undo, Redo, Time, Split Here, Delete, Zoom, Add)
           Container(
-            height: 42,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            height: 44,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
             decoration: const BoxDecoration(
               color: AppTheme.surfaceElevated,
               border: Border(bottom: BorderSide(color: AppTheme.stroke, width: 1)),
             ),
             child: Row(
               children: [
+                // Undo button (Zero-fear editing)
+                IconButton(
+                  icon: Icon(
+                    Icons.undo_rounded,
+                    size: 19,
+                    color: widget.provider.canUndo ? Colors.white : Colors.white24,
+                  ),
+                  tooltip: 'Undo',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: widget.provider.canUndo ? () => widget.provider.undo() : null,
+                ),
+
+                // Redo button
+                IconButton(
+                  icon: Icon(
+                    Icons.redo_rounded,
+                    size: 19,
+                    color: widget.provider.canRedo ? Colors.white : Colors.white24,
+                  ),
+                  tooltip: 'Redo',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: widget.provider.canRedo ? () => widget.provider.redo() : null,
+                ),
+
+                const SizedBox(width: 4),
+
                 // Current Playhead Time display
                 Text(
                   _formatTimeDisplay(widget.provider.currentTimeMs),
                   style: const TextStyle(
                     color: AppTheme.cyan,
-                    fontSize: 13,
+                    fontSize: 12,
                     fontFamily: 'monospace',
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(width: 8),
                 Text(
-                  '/ ${project.formattedDuration}',
+                  ' / ${project.formattedDuration}',
                   style: const TextStyle(
                     color: AppTheme.textMuted,
-                    fontSize: 12,
+                    fontSize: 11,
                     fontFamily: 'monospace',
                   ),
                 ),
+
                 const Spacer(),
 
-                // Split at Playhead button
-                IconButton(
-                  icon: const Icon(Icons.call_split_rounded, size: 18, color: Colors.white),
-                  tooltip: 'Split Clip at Playhead',
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () {
+                // Big prominent "✂️ Split Here" Action Button (Zero confusion)
+                GestureDetector(
+                  onTap: () {
                     widget.provider.splitClipAtPlayhead();
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Clip split into two segments'),
-                        duration: Duration(milliseconds: 1200),
-                        backgroundColor: AppTheme.primary,
+                        content: Row(
+                          children: [
+                            Icon(Icons.check_circle, color: AppTheme.cyan, size: 16),
+                            SizedBox(width: 8),
+                            Text('Video split right at playhead!'),
+                          ],
+                        ),
+                        duration: Duration(milliseconds: 1000),
+                        backgroundColor: AppTheme.surfaceElevated,
                       ),
                     );
                   },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.primary.withOpacity(0.4),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.call_split_rounded, size: 13, color: Colors.white),
+                        SizedBox(width: 4),
+                        Text(
+                          'Split Here',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
+
+                const SizedBox(width: 6),
 
                 // Delete selected clip
                 if (project.clips.length > 1)
@@ -126,11 +187,11 @@ class _TimelineViewState extends State<TimelineView> {
                   onTap: widget.onAddClip,
                   borderRadius: BorderRadius.circular(8),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                     decoration: BoxDecoration(
-                      color: AppTheme.primary.withOpacity(0.2),
+                      color: AppTheme.surfaceCard,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppTheme.primary, width: 1),
+                      border: Border.all(color: AppTheme.stroke, width: 1),
                     ),
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
@@ -138,7 +199,7 @@ class _TimelineViewState extends State<TimelineView> {
                         Icon(Icons.add, size: 14, color: AppTheme.primaryLight),
                         SizedBox(width: 4),
                         Text(
-                          'Add Clip',
+                          '+ Clip',
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
@@ -298,53 +359,69 @@ class _TimelineViewState extends State<TimelineView> {
               ),
             ),
 
-            // Left yellow trim handle
+            // Left yellow trim handle (Draggable with finger)
             if (isSelected)
               Positioned(
                 left: 0,
                 top: 0,
                 bottom: 0,
-                width: 14,
-                child: Container(
-                  decoration: const BoxDecoration(
-                    color: AppTheme.amberHandle,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(8),
-                      bottomLeft: Radius.circular(8),
+                width: 18,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onHorizontalDragUpdate: (details) {
+                    final deltaMs = ((details.delta.dx / _pixelsPerSecond) * 1000 * clip.speed).round();
+                    final newTrimStart = (clip.trimStartMs + deltaMs).clamp(0, clip.trimEndMs - 300);
+                    widget.provider.updateTrim(index, newTrimStart, clip.trimEndMs);
+                  },
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: AppTheme.amberHandle,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(8),
+                        bottomLeft: Radius.circular(8),
+                      ),
                     ),
-                  ),
-                  child: const Center(
-                    child: Icon(Icons.chevron_left, size: 14, color: Colors.black),
+                    child: const Center(
+                      child: Icon(Icons.chevron_left, size: 16, color: Colors.black),
+                    ),
                   ),
                 ),
               ),
 
-            // Right yellow trim handle
+            // Right yellow trim handle (Draggable with finger)
             if (isSelected)
               Positioned(
                 right: 0,
                 top: 0,
                 bottom: 0,
-                width: 14,
-                child: Container(
-                  decoration: const BoxDecoration(
-                    color: AppTheme.amberHandle,
-                    borderRadius: BorderRadius.only(
-                      topRight: Radius.circular(8),
-                      bottomRight: Radius.circular(8),
+                width: 18,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onHorizontalDragUpdate: (details) {
+                    final deltaMs = ((details.delta.dx / _pixelsPerSecond) * 1000 * clip.speed).round();
+                    final newTrimEnd = (clip.trimEndMs + deltaMs).clamp(clip.trimStartMs + 300, clip.durationMs);
+                    widget.provider.updateTrim(index, clip.trimStartMs, newTrimEnd);
+                  },
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: AppTheme.amberHandle,
+                      borderRadius: BorderRadius.only(
+                        topRight: Radius.circular(8),
+                        bottomRight: Radius.circular(8),
+                      ),
                     ),
-                  ),
-                  child: const Center(
-                    child: Icon(Icons.chevron_right, size: 14, color: Colors.black),
+                    child: const Center(
+                      child: Icon(Icons.chevron_right, size: 16, color: Colors.black),
+                    ),
                   ),
                 ),
               ),
 
             // Clip details overlay
             Positioned(
-              left: isSelected ? 18 : 8,
+              left: isSelected ? 22 : 8,
               top: 6,
-              right: isSelected ? 18 : 8,
+              right: isSelected ? 22 : 8,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
@@ -400,6 +477,32 @@ class _TimelineViewState extends State<TimelineView> {
                 ],
               ),
             ),
+
+            // Beginner-friendly trim guidance cue
+            if (isSelected && width > 110)
+              Positioned(
+                bottom: 4,
+                left: 20,
+                right: 20,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.85),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: AppTheme.amberHandle.withOpacity(0.4), width: 0.8),
+                    ),
+                    child: const Text(
+                      '◀ Drag to Trim ▶',
+                      style: TextStyle(
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.amberHandle,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -432,23 +535,26 @@ class _TimelineViewState extends State<TimelineView> {
 
   Widget _buildAudioTrack(dynamic project) {
     if (project.audioTracks.isEmpty) {
-      return Container(
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.03),
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: Colors.white12, style: BorderStyle.solid),
-        ),
-        child: const Center(
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.music_note_outlined, size: 14, color: AppTheme.textMuted),
-              SizedBox(width: 6),
-              Text(
-                'No audio added • Tap Audio tool below to add music or SFX',
-                style: TextStyle(color: AppTheme.textMuted, fontSize: 11),
-              ),
-            ],
+      return GestureDetector(
+        onTap: () => widget.provider.setActiveTool('music'),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppTheme.cyan.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: AppTheme.cyan.withOpacity(0.3), width: 1),
+          ),
+          child: const Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.add_circle_outline, size: 13, color: AppTheme.cyan),
+                SizedBox(width: 6),
+                Text(
+                  'Tap to Add Music or SFX 🎵',
+                  style: TextStyle(color: AppTheme.cyan, fontSize: 11, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -457,69 +563,114 @@ class _TimelineViewState extends State<TimelineView> {
     final track = project.audioTracks.first;
     final width = ((track.durationMs / 1000) * _pixelsPerSecond).clamp(100.0, 1800.0);
 
-    return Container(
-      width: width,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppTheme.cyan.withOpacity(0.18),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: AppTheme.cyan.withOpacity(0.5), width: 1),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.music_note, size: 14, color: AppTheme.cyan),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              '${track.title} • ${track.artist}',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+    return GestureDetector(
+      onTap: () => widget.provider.setActiveTool('music'),
+      child: Container(
+        width: width,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: AppTheme.cyan.withOpacity(0.18),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: AppTheme.cyan.withOpacity(0.5), width: 1),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.music_note, size: 14, color: AppTheme.cyan),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                '${track.title} • ${track.artist}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
             ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-            decoration: BoxDecoration(
-              color: Colors.black45,
-              borderRadius: BorderRadius.circular(4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+              decoration: BoxDecoration(
+                color: Colors.black45,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                '${(track.volume * 100).toInt()}%',
+                style: const TextStyle(fontSize: 9, color: AppTheme.cyan),
+              ),
             ),
-            child: Text(
-              '${(track.volume * 100).toInt()}%',
-              style: const TextStyle(fontSize: 9, color: AppTheme.cyan),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildOverlayTrack(dynamic project) {
-    return Row(
-      children: [
-        for (final text in project.textLayers)
-          Container(
-            margin: const EdgeInsets.only(right: 6),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            decoration: BoxDecoration(
-              color: AppTheme.primary.withOpacity(0.35),
-              borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: AppTheme.primary, width: 0.8),
-            ),
+    if (project.textLayers.isEmpty && project.stickerLayers.isEmpty) {
+      return GestureDetector(
+        onTap: () {
+          showDialog(
+            context: context,
+            builder: (_) => TextEditorDialog(provider: widget.provider),
+          );
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.04),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: Colors.white12, width: 0.8),
+          ),
+          child: const Center(
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.title, size: 10, color: Colors.white),
-                const SizedBox(width: 4),
+                Icon(Icons.title, size: 11, color: AppTheme.textMuted),
+                SizedBox(width: 6),
                 Text(
-                  text.text,
-                  maxLines: 1,
-                  style: const TextStyle(fontSize: 9, color: Colors.white),
+                  'Tap to Add Text / Subtitle 💬',
+                  style: TextStyle(color: AppTheme.textMuted, fontSize: 10, fontWeight: FontWeight.w600),
                 ),
               ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        for (final text in project.textLayers)
+          GestureDetector(
+            onTap: () {
+              showDialog(
+                context: context,
+                builder: (_) => TextEditorDialog(
+                  provider: widget.provider,
+                  existingLayer: text,
+                ),
+              );
+            },
+            child: Container(
+              margin: const EdgeInsets.only(right: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppTheme.primary.withOpacity(0.35),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: AppTheme.primary, width: 0.8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.title, size: 10, color: Colors.white),
+                  const SizedBox(width: 4),
+                  Text(
+                    text.text,
+                    maxLines: 1,
+                    style: const TextStyle(fontSize: 9, color: Colors.white),
+                  ),
+                ],
+              ),
             ),
           ),
         for (final sticker in project.stickerLayers)

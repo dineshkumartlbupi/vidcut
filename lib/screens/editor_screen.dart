@@ -61,6 +61,13 @@ class EditorScreen extends StatelessWidget {
           ),
         ),
         actions: [
+          // Beginner's Quick Tips button
+          IconButton(
+            icon: const Icon(Icons.lightbulb_outline, size: 20, color: AppTheme.cyan),
+            tooltip: 'Quick Editing Tips',
+            onPressed: () => _showTipsDialog(context),
+          ),
+
           // Aspect Ratio pill
           GestureDetector(
             onTap: () => provider.setActiveTool('canvas'),
@@ -356,6 +363,90 @@ class EditorScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  void _showTipsDialog(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.surfaceElevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.lightbulb_rounded, color: AppTheme.cyan, size: 22),
+                const SizedBox(width: 8),
+                const Text(
+                  'Quick Editing Tips (Zero Effort!)',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 20, color: Colors.white70),
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            _tipRow('✂️ Cut & Split', 'Drag the red playhead to any frame, then tap "Split Here" on the timeline.'),
+            const SizedBox(height: 10),
+            _tipRow('◀ Drag to Trim ▶', 'Tap any clip in the timeline and drag the yellow handles on its edges to shorten it.'),
+            const SizedBox(height: 10),
+            _tipRow('🎵 Add Music & SFX', 'Tap the empty audio track or the "Audio" button to add trending beats or funny sounds.'),
+            const SizedBox(height: 10),
+            _tipRow('💬 Add Viral Text', 'Tap "Text" to add styled viral hooks and subtitles with 1 tap.'),
+            const SizedBox(height: 10),
+            _tipRow('↩️ Undo Any Mistake', 'Made a mistake? Tap the ↩️ button on the timeline to revert instantly!'),
+            const SizedBox(height: 18),
+            SizedBox(
+              width: double.infinity,
+              height: 44,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Got it! Start Creating ✨'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _tipRow(String title, String desc) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 6,
+          height: 6,
+          margin: const EdgeInsets.only(top: 6, right: 10),
+          decoration: const BoxDecoration(
+            color: AppTheme.primaryLight,
+            shape: BoxShape.circle,
+          ),
+        ),
+        Expanded(
+          child: RichText(
+            text: TextSpan(
+              style: const TextStyle(fontSize: 13, height: 1.4, color: AppTheme.textSecondary),
+              children: [
+                TextSpan(
+                  text: '$title: ',
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+                TextSpan(text: desc),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -24,6 +25,10 @@ class EditorProvider extends ChangeNotifier {
   final AudioPlayer _audioPlayer = AudioPlayer();
   Timer? _playbackTicker;
 
+  // Undo / Redo history stacks (Zero-fear editing)
+  final List<String> _undoStack = [];
+  final List<String> _redoStack = [];
+
   // Getters
   List<VideoProject> get projects => _projects;
   VideoProject? get currentProject => _currentProject;
@@ -32,6 +37,8 @@ class EditorProvider extends ChangeNotifier {
   bool get isPlaying => _isPlaying;
   String get activeTool => _activeTool;
   VideoPlayerController? get videoController => _videoController;
+  bool get canUndo => _undoStack.isNotEmpty;
+  bool get canRedo => _redoStack.isNotEmpty;
 
   VideoClip? get selectedClip {
     if (_currentProject == null || _currentProject!.clips.isEmpty) return null;
@@ -207,6 +214,41 @@ class EditorProvider extends ChangeNotifier {
     } catch (_) {}
   }
 
+  // History recording for zero-fear editing
+  void _recordHistory() {
+    if (_currentProject != null) {
+      _undoStack.add(jsonEncode(_currentProject!.toJson()));
+      if (_undoStack.length > 25) {
+        _undoStack.removeAt(0);
+      }
+      _redoStack.clear();
+    }
+  }
+
+  void undo() {
+    if (_undoStack.isNotEmpty && _currentProject != null) {
+      _redoStack.add(jsonEncode(_currentProject!.toJson()));
+      final previousState = _undoStack.removeLast();
+      _currentProject = VideoProject.fromJson(jsonDecode(previousState));
+      _selectedClipIndex = _selectedClipIndex.clamp(0, (_currentProject!.clips.length - 1).clamp(0, 999));
+      _initVideoForCurrentClip();
+      saveCurrentProject();
+      notifyListeners();
+    }
+  }
+
+  void redo() {
+    if (_redoStack.isNotEmpty && _currentProject != null) {
+      _undoStack.add(jsonEncode(_currentProject!.toJson()));
+      final nextState = _redoStack.removeLast();
+      _currentProject = VideoProject.fromJson(jsonDecode(nextState));
+      _selectedClipIndex = _selectedClipIndex.clamp(0, (_currentProject!.clips.length - 1).clamp(0, 999));
+      _initVideoForCurrentClip();
+      saveCurrentProject();
+      notifyListeners();
+    }
+  }
+
   // Timeline & Editing Tools
   void selectClip(int index) {
     if (_currentProject == null) return;
@@ -219,6 +261,7 @@ class EditorProvider extends ChangeNotifier {
 
   void addClips(List<VideoClip> newClips) {
     if (_currentProject == null) return;
+    _recordHistory();
     _currentProject!.clips.addAll(newClips);
     if (_currentProject!.thumbnailUrl.isEmpty && newClips.isNotEmpty) {
       _currentProject!.thumbnailUrl = newClips.first.thumbnailUrl;
@@ -230,6 +273,7 @@ class EditorProvider extends ChangeNotifier {
   void removeClip(int index) {
     if (_currentProject == null || _currentProject!.clips.isEmpty) return;
     if (index >= 0 && index < _currentProject!.clips.length) {
+      _recordHistory();
       _currentProject!.clips.removeAt(index);
       if (_selectedClipIndex >= _currentProject!.clips.length) {
         _selectedClipIndex = (_currentProject!.clips.length - 1).clamp(0, 999);
@@ -242,6 +286,7 @@ class EditorProvider extends ChangeNotifier {
 
   void reorderClips(int oldIndex, int newIndex) {
     if (_currentProject == null) return;
+    _recordHistory();
     if (newIndex > oldIndex) newIndex -= 1;
     final item = _currentProject!.clips.removeAt(oldIndex);
     _currentProject!.clips.insert(newIndex, item);
@@ -254,17 +299,34 @@ class EditorProvider extends ChangeNotifier {
     if (_currentProject == null || selectedClip == null) return;
     final clip = selectedClip!;
 
-    final currentEffective = clip.effectiveDurationMs;
-    final splitPointMs = (currentEffective / 2).round();
+    _recordHistory();
+
+    // Calculate exact playhead position relative to this clip
+    int clipStartOnTimeline = 0;
+    for (int i = 0; i < _selectedClipIndex; i++) {
+      clipStartOnTimeline += _currentProject!.clips[i].effectiveDurationMs;
+    }
+
+    final offsetWithinClipMs = _currentTimeMs - clipStartOnTimeline;
+    final effectiveDuration = clip.effectiveDurationMs;
+
+    int splitOffsetMs;
+    // If the playhead is located inside this clip with at least 250ms on each side
+    if (offsetWithinClipMs >= 250 && offsetWithinClipMs <= effectiveDuration - 250) {
+      splitOffsetMs = (offsetWithinClipMs * clip.speed).round();
+    } else {
+      // Fallback to exact midpoint
+      splitOffsetMs = ((clip.trimEndMs - clip.trimStartMs) / 2).round();
+    }
 
     final clipA = clip.copyWith(
       id: const Uuid().v4(),
-      trimEndMs: clip.trimStartMs + splitPointMs,
+      trimEndMs: clip.trimStartMs + splitOffsetMs,
     );
 
     final clipB = clip.copyWith(
       id: const Uuid().v4(),
-      trimStartMs: clip.trimStartMs + splitPointMs,
+      trimStartMs: clip.trimStartMs + splitOffsetMs,
     );
 
     _currentProject!.clips.removeAt(_selectedClipIndex);
@@ -278,6 +340,7 @@ class EditorProvider extends ChangeNotifier {
 
   void updateTrim(int clipIndex, int startMs, int endMs) {
     if (_currentProject == null || clipIndex >= _currentProject!.clips.length) return;
+    _recordHistory();
     final clip = _currentProject!.clips[clipIndex];
     clip.trimStartMs = startMs.clamp(0, clip.durationMs);
     clip.trimEndMs = endMs.clamp(clip.trimStartMs + 200, clip.durationMs);
@@ -287,6 +350,7 @@ class EditorProvider extends ChangeNotifier {
 
   void updateClipSpeed(int clipIndex, double speed) {
     if (_currentProject == null || clipIndex >= _currentProject!.clips.length) return;
+    _recordHistory();
     _currentProject!.clips[clipIndex].speed = speed;
     _videoController?.setPlaybackSpeed(speed.clamp(0.25, 4.0));
     saveCurrentProject();
@@ -305,6 +369,7 @@ class EditorProvider extends ChangeNotifier {
 
   void setClipFilter(int clipIndex, String filterId) {
     if (_currentProject == null || clipIndex >= _currentProject!.clips.length) return;
+    _recordHistory();
     _currentProject!.clips[clipIndex].filterId = filterId;
     saveCurrentProject();
     notifyListeners();
@@ -312,6 +377,7 @@ class EditorProvider extends ChangeNotifier {
 
   void updateClipAdjustments(int clipIndex, {double? brightness, double? contrast, double? saturation}) {
     if (_currentProject == null || clipIndex >= _currentProject!.clips.length) return;
+    _recordHistory();
     final clip = _currentProject!.clips[clipIndex];
     if (brightness != null) clip.brightness = brightness;
     if (contrast != null) clip.contrast = contrast;
@@ -322,6 +388,7 @@ class EditorProvider extends ChangeNotifier {
 
   void rotateClip(int clipIndex) {
     if (_currentProject == null || clipIndex >= _currentProject!.clips.length) return;
+    _recordHistory();
     final clip = _currentProject!.clips[clipIndex];
     clip.rotationDegrees = (clip.rotationDegrees + 90) % 360;
     saveCurrentProject();
@@ -330,6 +397,7 @@ class EditorProvider extends ChangeNotifier {
 
   void flipClip(int clipIndex) {
     if (_currentProject == null || clipIndex >= _currentProject!.clips.length) return;
+    _recordHistory();
     final clip = _currentProject!.clips[clipIndex];
     clip.isFlippedHorizontally = !clip.isFlippedHorizontally;
     saveCurrentProject();
@@ -338,6 +406,7 @@ class EditorProvider extends ChangeNotifier {
 
   void setTransition(int clipIndex, VideoTransitionType transition) {
     if (_currentProject == null || clipIndex >= _currentProject!.clips.length) return;
+    _recordHistory();
     _currentProject!.clips[clipIndex].transition = transition;
     saveCurrentProject();
     notifyListeners();
@@ -345,6 +414,7 @@ class EditorProvider extends ChangeNotifier {
 
   void setAspectRatio(AspectRatioPreset ratio) {
     if (_currentProject == null) return;
+    _recordHistory();
     _currentProject!.aspectRatio = ratio;
     saveCurrentProject();
     notifyListeners();
@@ -353,6 +423,7 @@ class EditorProvider extends ChangeNotifier {
   // Audio Layers
   void addAudioTrack(AudioTrack track) {
     if (_currentProject == null) return;
+    _recordHistory();
     _currentProject!.audioTracks.add(track);
     saveCurrentProject();
     notifyListeners();
@@ -360,6 +431,7 @@ class EditorProvider extends ChangeNotifier {
 
   void removeAudioTrack(String id) {
     if (_currentProject == null) return;
+    _recordHistory();
     _currentProject!.audioTracks.removeWhere((a) => a.id == id);
     saveCurrentProject();
     notifyListeners();
@@ -368,6 +440,7 @@ class EditorProvider extends ChangeNotifier {
   // Text Layers
   void addTextLayer(TextLayer layer) {
     if (_currentProject == null) return;
+    _recordHistory();
     _currentProject!.textLayers.add(layer);
     saveCurrentProject();
     notifyListeners();
@@ -375,6 +448,7 @@ class EditorProvider extends ChangeNotifier {
 
   void updateTextLayer(TextLayer layer) {
     if (_currentProject == null) return;
+    _recordHistory();
     final idx = _currentProject!.textLayers.indexWhere((t) => t.id == layer.id);
     if (idx != -1) {
       _currentProject!.textLayers[idx] = layer;
@@ -385,6 +459,7 @@ class EditorProvider extends ChangeNotifier {
 
   void removeTextLayer(String id) {
     if (_currentProject == null) return;
+    _recordHistory();
     _currentProject!.textLayers.removeWhere((t) => t.id == id);
     saveCurrentProject();
     notifyListeners();
@@ -393,6 +468,7 @@ class EditorProvider extends ChangeNotifier {
   // Sticker Layers
   void addStickerLayer(StickerLayer layer) {
     if (_currentProject == null) return;
+    _recordHistory();
     _currentProject!.stickerLayers.add(layer);
     saveCurrentProject();
     notifyListeners();
@@ -400,6 +476,7 @@ class EditorProvider extends ChangeNotifier {
 
   void removeStickerLayer(String id) {
     if (_currentProject == null) return;
+    _recordHistory();
     _currentProject!.stickerLayers.removeWhere((s) => s.id == id);
     saveCurrentProject();
     notifyListeners();
