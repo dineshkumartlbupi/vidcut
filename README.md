@@ -52,7 +52,7 @@ video_editor_app/
 │   ├── services/              # VideoExportService, StorageService
 │   ├── state/                 # EditorProvider (Riverpod / ChangeNotifier)
 │   └── widgets/               # Timeline, Viewport, Sheets (Speed, Filters, Audio)
-├── android/                   # Native Android Host (compileSdk 36, targetSdk 35)
+├── android/                   # Native Android Host (compileSdk 36, targetSdk 36, Keystore & Gradle Wrapper included)
 ├── VidCut_PlayStore_Assets/   # Play Store Assets (Icon, Feature Graphic, Screenshots)
 ├── privacy_policy.html        # Hosted Privacy Policy Webpage
 └── README.md
