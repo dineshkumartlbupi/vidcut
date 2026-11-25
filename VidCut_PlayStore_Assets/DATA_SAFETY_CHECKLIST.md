@@ -42,3 +42,19 @@ When submitting **VidCut: Video Editor & Maker** (`com.vidcut.videoeditor`) in G
 ## 4. Target Audience
 - **Target Age Group:** 13 and older (Teens, Young Adults, Creators)
 - **Is your app designed for children?** 👉 **No**
+
+---
+
+## 5. Photo and Video Permissions Declaration (New Google Play Policy)
+
+### Box 1: Read media images (Max 250 chars)
+```
+VidCut is a video editor requiring persistent access to photos for multi-clip slideshow reels, timeline thumbnail caching, and real-time PIP overlays, which one-time system pickers cannot sustain for continuous non-linear project editing.
+```
+*(Length: 238 / 250 characters)*
+
+### Box 2: Read media video (Max 250 chars)
+```
+VidCut is a video editor requiring persistent file access for multi-track timeline decoding, millisecond frame scrubbing, audio extraction, and 4K GPU rendering, which one-time system pickers cannot sustain for non-linear multi-clip editing.
+```
+*(Length: 241 / 250 characters)*
